@@ -12,9 +12,9 @@ A small download helper for World of Warcraft addons
 
 ### How it works
 
-- Text1
-- Text2
-- Text3
+- Some text <-- TODO
+- Some text <-- TODO
+- Some text <-- TODO
 
 ### Why it exists
 I developed a download manager for World of Warcraft addons, called [WADM](https://github.com/mbodm/wadm), over a decade ago. For many many years WADM handled all of your needs with ease, when it comes down to downloading and updating the addons. But since Curse/Overwolf changed their political stance, alternative download managers (like mine, Ajour, WowUp, or others) no longer works with the https://www.curseforge.com site, or their REST web service. The only option is to use their own addon download manager. Many of us don´t want that, for different reasons.
@@ -34,8 +34,8 @@ There are not any other special requirements. All the release-binaries are compi
 You can choose between _self-contained_ and _framework-dependent_ .NET application builds, when downloading a release. If you want to run the _framework-dependent_ version, you need (as additional requirement) the .NET 6 runtime installed on your machine. You can find more information about that topic on the [Releases](https://github.com/mbodm/wadh/releases) page.
 
 ### Notes
-- Note1
-- Note2
-- Note3
+- Some note <-- TODO
+- Some note <-- TODO
+- Some note <-- TODO
 
 #### Have fun.
