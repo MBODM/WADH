@@ -23,7 +23,7 @@ For more information about "the end of all alternative addon download managers" 
 
 So, for a while i was OK with downloading the addons manually (which is not the time consuming bottleneck here) and unzipping them (this is the time consuming part). Therefore i wrote a tool named [WAUZ](https://github.com/mbodm/wauz) to make the unzip process way easier. I downloaded the addons with the help of my browser and some direct-download-link bookmarks. While this worked fine enough and made addon updating less painful, i still tried some better solutions here and there.
 
-Awesonium, or other ways to embed a full fledged web browser, did not the trick for me. And web scraping tools like Scrappy, Axios, or Puppeteer were also not my deal. So i tested the Microsoft Edge web engine component (named WebView2) a bit these days. And the result was this small tool. Combined with above mentioned WAUZ tool it makes my live even more easier. 😁
+Awesonium (or other ways to embed a full fledged web browser) did not the trick for me. And web scraping tools like Scrappy, Axios, or Puppeteer were also not my type of deal. These days i played a bit with the Microsoft Edge web engine component (named WebView2), just for fun. And i liked it. The result, as some first shot, is this small tool. Combined with above mentioned WAUZ tool it makes my live even more easier. 😁
 
 ### Requirements
 
