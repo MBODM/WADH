@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.panelWebView = new System.Windows.Forms.Panel();
             this.webView = new Microsoft.Web.WebView2.WinForms.WebView2();
             this.labelStatus = new System.Windows.Forms.Label();
@@ -101,6 +102,7 @@
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.labelStatus);
             this.Controls.Add(this.panelWebView);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MainForm";
