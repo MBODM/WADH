@@ -34,8 +34,21 @@ There are not any other special requirements. All the release-binaries are compi
 You can choose between _self-contained_ and _framework-dependent_ .NET application builds, when downloading a release. If you want to run the _framework-dependent_ version, you need (as additional requirement) the .NET 6 runtime installed on your machine. You can find more information about that topic on the [Releases](https://github.com/mbodm/wadh/releases) page.
 
 ### Notes
-- Some note <-- TODO
-- Some note <-- TODO
-- Some note <-- TODO
+- WADH loads your selected downlod folder and the addon urls from a config file.
+- WADH loads that data when you press the "Start" button.
+- WADH writes a log file if some error happens.
+- You can find both files (config and log) in the "C:\Users\YOUR_USER_NAME\AppData\Local\MBODM" folder.
+- WADH is using the Microsoft Edge WebView2 web component, to access the download site.
+- The reason for this: https://www.curseforge.com is protected by Cloudflare.
+- WADH deletes all zip files in the given download folder, before the download starts.
+- WADH is written in C# and developed with .NET 6, in Visual Studio 2022.
+- WADH is using Windows.Forms as UI framework (yes, because "rapid development").
+- I never compiled WADH with other tools, like Rider or VS Code. I solely used Visual Studio 2022 Community.
+- If you want to compile by yourself, you can just use i.e. Visual Studio 2022 (any edition). You need nothing else.
+- The release-binaries are compiled with "win-x64" as target platform (self-contained).
+- Only a self-contained build is available at the moment, cause the WebView2 crashes in a framework-dependent build.
+- The release-binaries are compiled with "ReadyToRun compilation", checked in the Visual Studio Publish dialog.
+- WADH is under MIT license. Feel free to use the source and do whatever you want. I assume no liability.
+- WADH just exists, because i am lazy and made my life a bit easier, by writing this tool (for me and some friends). 
 
 #### Have fun.
