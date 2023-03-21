@@ -25,12 +25,6 @@ So, for a while i was OK with downloading the addons manually (which is not the 
 
 Awesonium, or other ways to embed a full fledged web browser, did not the trick for me. And web scraping tools like Scrappy, Axios, or Puppeteer were also not my deal. So i tested the Microsoft Edge web engine component (named WebView2) a bit these days. And the result was this small tool. Combined with above mentioned WAUZ tool it makes my live even more easier. 😁
 
-### An easy way to grab your addons
-
-Some additional hint here (since this has nothing to do with the tool per se):
-
-A fast and easy way to get all the actual addon zip files is to bookmark all the direct download sites, for every addon, in your browser. Especially for https://www.curseforge.com you can bookmark an addon´s download site directly. The addon download immediately starts, after clicking the bookmark. This helps a lot to get all the latest addon versions very fast, without much effort. This way you quickly have all of them in a single folder. The process of manually unzipping them is way more time consuming. But that´s the moment when WAUZ comes to rescue. :wink:
-
 ### Requirements
 
 - 64-bit Windows
