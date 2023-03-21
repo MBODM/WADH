@@ -6,7 +6,7 @@ A small download helper for World of Warcraft addons
 ### What it is
 
 - It´s a very simple and tiny .NET 6 application named WADH (**W**orld of Warcraft **A**ddon **D**ownload **H**elper).
-- Since my previous download manager (see section below) was written ages ago, WADH is spoken like "wad-age". :)
+- Since my previous download manager (see [section](#why-it-exists) below) was written ages ago, WADH is spoken like "wad-age". 😉
 - More explanation (what, why, WADM) <-- TODO
 - It´s just a typical ".exe file" Windows application. Just download the newest release, unzip and run it. That´s it. There is no installer, setup or something like that.
 - It´s sole purpose is to download a bunch of zip files into a folder. Nothing else. It´s just there to make your life a little bit easier.
