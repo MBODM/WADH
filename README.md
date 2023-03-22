@@ -15,7 +15,7 @@ A small download helper for World of Warcraft addons
 - WADH is using the Microsoft Edge WebView2 webview component, to open the addon zip file download sites (hosted at curseforge.com).
 - Since curseforge.com is strictly protected by Cloudflare, a technique like this is at the moment the only way to fetch the addons.
 - WADH is looking inside the `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder for a config file named `WADH.xml` (see file format below).
-- WADH is loading that config file and download all given urls sequentially into the given folder.
+- WADH is loading that config file and download all given urls sequentially into the given folder, when the "Start" button is pressed.
 
 The config file format:
 
