@@ -61,7 +61,7 @@ You can choose between _self-contained_ and _framework-dependent_ .NET applicati
 - WADH loads that data when you press the "Start" button.
 - WADH writes a log file if some error happens.
 - You can find both files (config and log) in the "C:\Users\YOUR_USER_NAME\AppData\Local\MBODM" folder.
-- WADH is using the Microsoft Edge WebView2 web component, to access the download site.
+- WADH is using the Microsoft Edge WebView2 webview component, to access the download site.
 - The reason for this: https://www.curseforge.com is protected by Cloudflare.
 - WADH deletes all zip files in the given download folder, before the download starts.
 - WADH is written in C# and developed with .NET 6, in Visual Studio 2022.
