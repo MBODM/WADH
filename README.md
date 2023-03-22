@@ -68,7 +68,7 @@ You can choose between _self-contained_ and _framework-dependent_ .NET applicati
 - WADH is using Windows.Forms as UI framework (yes, because "rapid development").
 - I never compiled WADH with other tools, like Rider or VS Code. I solely used Visual Studio 2022 Community.
 - If you want to compile by yourself, you can just use i.e. Visual Studio 2022 (any edition). You need nothing else.
-- The release-binaries are compiled with "win-x64" as target platform (self-contained).
+- The release-binaries are compiled with "win-x64" as target platform (self-contained and framework-dependent).
 - Only a self-contained build is available at the moment, cause WebView2 crashes in framework-dependent build.
 - The release-binaries are compiled with "ReadyToRun compilation", checked in the Visual Studio Publish dialog.
 - WADH is under MIT license. Feel free to use the source and do whatever you want. I assume no liability.
