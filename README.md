@@ -7,7 +7,7 @@ A small download helper for World of Warcraft addons
 
 - It´s a very simple and tiny .NET 6 application named WADH (**W**orld of Warcraft **A**ddon **D**ownload **H**elper). WADH is spoken like "wad-age", since my previous download manager (see [section](#why-it-exists) below) was written 'ages' ago... :stuck_out_tongue_winking_eye:
 - WADH automatically downloads a bunch of specific zip files from https://www.curseforge.com into a specific folder. The folder and the zip file urls are specified in a XML config file.
-- It´s just a typical ".exe file" Windows application. Just download the newest release, unzip and run it. That´s it. There is no installer, setup or something like that.
+- It´s just a typical ".exe file Windows application". Just download the newest release, unzip and run it. That´s it. There is no installer, setup or something like that.
 - It´s sole purpose is to download a bunch of zip files (World of Warcraft addons, hosted at curseforge.com) into a folder. Nothing else. It´s just there to make your life a little bit easier.
 
 ### How it works
