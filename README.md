@@ -12,9 +12,32 @@ A small download helper for World of Warcraft addons
 
 ### How it works
 
-- Some text <-- TODO
-- Some text <-- TODO
-- Some text <-- TODO
+- WADH is using the Microsoft Edge WebView2 webview component, to open the addon zip file download sites (hosted at curseforge.com).
+- Since curseforge.com is strictly protected by Cloudflare, a technique like this is at the moment the only way to fetch the addons.
+- WADH is looking inside the `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder for a config file named `WADH.xml` (see file format below).
+- WADH is loading that config file and download all given urls sequentially into the given folder.
+
+The config file format:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<folder>C:\Data\Addons</folder>
+	<addons>
+		<url>https://www.curseforge.com/wow/addons/coordinates/download</url>
+		<url>https://www.curseforge.com/wow/addons/deadly-boss-mods/download</url>
+		<url>https://www.curseforge.com/wow/addons/details/download</url>
+		<url>https://www.curseforge.com/wow/addons/groupfinderflags/download</url>
+		<url>https://www.curseforge.com/wow/addons/handynotes/download</url>
+		<url>https://www.curseforge.com/wow/addons/handynotes-dragonflight/download</url>
+		<url>https://www.curseforge.com/wow/addons/mythic-dungeon-tools/download</url>
+		<url>https://www.curseforge.com/wow/addons/raiderio/download</url>
+		<url>https://www.curseforge.com/wow/addons/simulationcraft/download</url>
+		<url>https://www.curseforge.com/wow/addons/tomtom/download</url>
+		<url>https://www.curseforge.com/wow/addons/weakauras-2/download</url>
+	</addons>
+</root>
+```
 
 ### Why it exists
 I developed a download manager for World of Warcraft addons, called [WADM](https://github.com/mbodm/wadm), over a decade ago. For many many years WADM handled all of your needs with ease, when it comes down to downloading and updating the addons. But since Curse/Overwolf changed their political stance, alternative download managers (like mine, Ajour, WowUp, or others) no longer works with the https://www.curseforge.com site, or their REST web service. The only option is to use their own addon download manager. Many of us don´t want that, for different reasons.
