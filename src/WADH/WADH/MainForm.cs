@@ -9,6 +9,8 @@ namespace WADH
         private readonly IErrorLogger errorLogger;
         private readonly IFileSystemHelper fileSystemHelper;
 
+        private readonly WebViewHelper webViewHelper;
+
         public MainForm(IConfigReader configReader, IErrorLogger errorLogger, IFileSystemHelper fileSystemHelper)
         {
             this.configReader = configReader ?? throw new ArgumentNullException(nameof(configReader));
@@ -19,15 +21,15 @@ namespace WADH
 
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
-            Size = new Size(1280, 800); // 16:10
+            Size = new Size(1280, 800); /* 16:10 */
+
+            webViewHelper = new WebViewHelper(webView);
         }
 
         private async void MainForm_Load(object sender, EventArgs e)
         {
-            await webView.EnsureCoreWebView2Async();
-
-            ShowStartPage();
-
+            await webViewHelper.ConfigureWebView();
+            webViewHelper.ShowStartPage();
             webView.CoreWebView2.DownloadStarting += (s, e) => e.DownloadOperation.StateChanged += DownloadOperation_StateChanged;
         }
 
@@ -56,12 +58,10 @@ namespace WADH
                 return;
             }
 
-            var folder = Path.GetFullPath(configReader.DownloadFolder);
-            await InitDownloadFolder(folder);
-
-            webView.CoreWebView2.Profile.DefaultDownloadFolderPath = folder;
-            await webView.CoreWebView2.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.DownloadHistory);
-            webView.CoreWebView2.OpenDefaultDownloadDialog();
+            await InitDownloadFolder(configReader.DownloadFolder);
+            webViewHelper.SetDownloadFolder(configReader.DownloadFolder);
+            await webViewHelper.ClearDownloadHistory();
+            webViewHelper.ShowDownloadHistoryDialog();
 
             buttonStart.Enabled = false;
             progressBar.Minimum = 0;
@@ -94,25 +94,10 @@ namespace WADH
             }
         }
 
-        private void ShowStartPage()
-        {
-            var text1 = "The addon download sites are loaded and rendered inside this web control, using Microsoft Edge.";
-            var text2 = "The app needs to do this, since https://www.curseforge.com is strictly protected by Cloudflare.";
-
-            webView.NavigateToString(
-                "<html>" +
-                    "<body style=\"margin: 0; padding: 0; background-color: lightskyblue; font-family: Verdana; font-size: small;\">" +
-                        "<div style=\"background-color: steelblue; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); white-space: nowrap;\">" +
-                            $"<div style =\"color: white; margin: 10px;\">{text1}</div>" +
-                            $"<div style =\"color: white; margin: 10px;\">{text2}</div>" +
-                        "</div>" +
-                        "</body>" +
-                "</html>"
-            );
-        }
-
         private async Task InitDownloadFolder(string folder)
         {
+            folder = Path.GetFullPath(folder);
+
             if (Directory.Exists(folder))
             {
                 await fileSystemHelper.DeleteAllZipFilesInFolderAsync(folder);
@@ -126,10 +111,10 @@ namespace WADH
         private void StartNextDownload()
         {
             var url = configReader.AddonUrls.ElementAt(progressBar.Value);
-            var addon = url.Split("https://www.curseforge.com/wow/addons/").Last().Split("/download").First();
+            var name = url.Split("https://www.curseforge.com/wow/addons/").Last().Split("/download").First();
 
-            labelStatus.Text = $"Downloading {addon} ...";
-            webView.Source = new Uri(url);
+            labelStatus.Text = $"Downloading {name} ...";
+            webViewHelper.NavigateToUrl(url);
         }
 
         private static string GetVersion()
