@@ -5,14 +5,16 @@ namespace WADH
 {
     public partial class MainForm : Form
     {
+        private readonly IExternalToolsHelper externalToolsHelper;
         private readonly IConfigReader configReader;
         private readonly IErrorLogger errorLogger;
         private readonly IFileSystemHelper fileSystemHelper;
 
         private readonly WebViewHelper webViewHelper;
 
-        public MainForm(IConfigReader configReader, IErrorLogger errorLogger, IFileSystemHelper fileSystemHelper)
+        public MainForm(IExternalToolsHelper externalToolsHelper, IConfigReader configReader, IErrorLogger errorLogger, IFileSystemHelper fileSystemHelper)
         {
+            this.externalToolsHelper = externalToolsHelper ?? throw new ArgumentNullException(nameof(externalToolsHelper));
             this.configReader = configReader ?? throw new ArgumentNullException(nameof(configReader));
             this.errorLogger = errorLogger ?? throw new ArgumentNullException(nameof(errorLogger));
             this.fileSystemHelper = fileSystemHelper ?? throw new ArgumentNullException(nameof(fileSystemHelper));
@@ -22,6 +24,7 @@ namespace WADH
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
             Size = new Size(1280, 800); /* 16:10 */
+            labelWauz.Visible = false;
 
             webViewHelper = new WebViewHelper(webView);
         }
@@ -31,6 +34,13 @@ namespace WADH
             await webViewHelper.ConfigureWebView();
             webViewHelper.ShowStartPage();
             webView.CoreWebView2.DownloadStarting += (s, e) => e.DownloadOperation.StateChanged += DownloadOperation_StateChanged;
+
+            if (externalToolsHelper.CanOpenTool("WAUZ.exe"))
+            {
+                labelWauz.ForeColor = new LinkLabel().LinkColor;
+                labelWauz.Click += (s, e) => externalToolsHelper.OpenTool("WAUZ.exe");
+                labelWauz.Visible = true;
+            }
         }
 
         private async void ButtonStart_Click(object sender, EventArgs e)

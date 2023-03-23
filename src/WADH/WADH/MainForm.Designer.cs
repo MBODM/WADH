@@ -34,6 +34,7 @@
             this.labelStatus = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.buttonStart = new System.Windows.Forms.Button();
+            this.labelWauz = new System.Windows.Forms.Label();
             this.panelWebView.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.webView)).BeginInit();
             this.SuspendLayout();
@@ -93,12 +94,24 @@
             this.buttonStart.UseVisualStyleBackColor = true;
             this.buttonStart.Click += new System.EventHandler(this.ButtonStart_Click);
             // 
+            // labelWauz
+            // 
+            this.labelWauz.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.labelWauz.AutoSize = true;
+            this.labelWauz.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.labelWauz.Location = new System.Drawing.Point(618, 398);
+            this.labelWauz.Name = "labelWauz";
+            this.labelWauz.Size = new System.Drawing.Size(73, 15);
+            this.labelWauz.TabIndex = 5;
+            this.labelWauz.Text = "Open WAUZ";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(784, 461);
+            this.Controls.Add(this.labelWauz);
             this.Controls.Add(this.buttonStart);
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.labelStatus);
@@ -122,5 +135,6 @@
         private ProgressBar progressBar;
         private Button buttonStart;
         private Microsoft.Web.WebView2.WinForms.WebView2 webView;
+        private Label labelWauz;
     }
 }
