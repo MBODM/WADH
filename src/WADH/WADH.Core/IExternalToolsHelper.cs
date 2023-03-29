@@ -2,7 +2,8 @@
 {
     public interface IExternalToolsHelper
     {
-        bool CanOpenTool(string exeFileName);
-        void OpenTool(string exeFileName);
+        bool CanOpenWauz();
+        void OpenWauz();
+        void OpenExplorer(string arguments = "");
     }
 }

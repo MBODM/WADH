@@ -35,11 +35,43 @@ namespace WADH
             webViewHelper.ShowStartPage();
             webView.CoreWebView2.DownloadStarting += (s, e) => e.DownloadOperation.StateChanged += DownloadOperation_StateChanged;
 
-            if (externalToolsHelper.CanOpenTool("WAUZ.exe"))
+            var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me, since the BL knows the impl type.
+            if (!string.IsNullOrEmpty(configFolder))
+            {
+                labelConfig.ForeColor = new LinkLabel().LinkColor;
+                labelConfig.Click += (s, e) => externalToolsHelper.OpenExplorer(configFolder);
+            }
+
+            if (externalToolsHelper.CanOpenWauz())
             {
                 labelWauz.ForeColor = new LinkLabel().LinkColor;
-                labelWauz.Click += (s, e) => externalToolsHelper.OpenTool("WAUZ.exe");
+                labelWauz.Click += (s, e) => externalToolsHelper.OpenWauz();
                 labelWauz.Visible = true;
+            }
+        }
+
+        private async void DownloadOperation_StateChanged(object? sender, object e)
+        {
+            if (sender is CoreWebView2DownloadOperation downloadOperation)
+            {
+                if (downloadOperation.State == CoreWebView2DownloadState.Completed)
+                {
+                    progressBar.Value++;
+
+                    if (progressBar.Value >= progressBar.Maximum)
+                    {
+                        await Task.Delay(1500);
+
+                        labelStatus.Text = $"Download of {progressBar.Maximum} addons successfully finished.";
+                        buttonStart.Enabled = true;
+                        buttonClose.Enabled = true;
+                        buttonClose.Focus();
+
+                        return;
+                    }
+
+                    StartNextDownload();
+                }
             }
         }
 
@@ -74,6 +106,7 @@ namespace WADH
             webViewHelper.ShowDownloadHistoryDialog();
 
             buttonStart.Enabled = false;
+            buttonClose.Enabled = false;
             progressBar.Minimum = 0;
             progressBar.Maximum = configReader.AddonUrls.Count();
             progressBar.Value = progressBar.Minimum;
@@ -81,27 +114,9 @@ namespace WADH
             StartNextDownload();
         }
 
-        private async void DownloadOperation_StateChanged(object? sender, object e)
+        private void ButtonClose_Click(object sender, EventArgs e)
         {
-            if (sender is CoreWebView2DownloadOperation downloadOperation)
-            {
-                if (downloadOperation.State == CoreWebView2DownloadState.Completed)
-                {
-                    progressBar.Value++;
-
-                    if (progressBar.Value >= progressBar.Maximum)
-                    {
-                        await Task.Delay(1500);
-
-                        labelStatus.Text = $"Download of {progressBar.Maximum} addons successfully finished.";
-                        buttonStart.Enabled = true;
-
-                        return;
-                    }
-
-                    StartNextDownload();
-                }
-            }
+            Application.Exit();
         }
 
         private async Task InitDownloadFolder(string folder)

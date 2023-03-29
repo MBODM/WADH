@@ -4,19 +4,31 @@ namespace WADH.Core
 {
     public sealed class ExternalToolsHelper : IExternalToolsHelper
     {
-        public bool CanOpenTool(string exeFileName)
+        public bool CanOpenWauz()
         {
-            if (string.IsNullOrWhiteSpace(exeFileName))
-            {
-                throw new ArgumentException($"'{nameof(exeFileName)}' cannot be null or whitespace.", nameof(exeFileName));
-            }
-
-            return File.Exists(Path.Combine(GetAppFolder(), exeFileName));
+            return File.Exists(WauzFilePath());
         }
 
-        public void OpenTool(string exeFileName)
+        public void OpenWauz()
         {
-            Process.Start(Path.Combine(GetAppFolder(), exeFileName));
+            Process.Start(WauzFilePath());
+        }
+
+        public void OpenExplorer(string arguments = "")
+        {
+            if (string.IsNullOrWhiteSpace(arguments))
+            {
+                Process.Start("Explorer.exe");
+            }
+            else
+            {
+                Process.Start("Explorer.exe", arguments);
+            }
+        }
+
+        private static string WauzFilePath()
+        {
+            return Path.Combine(GetAppFolder(), "WAUZ.exe");
         }
 
         private static string GetAppFolder()

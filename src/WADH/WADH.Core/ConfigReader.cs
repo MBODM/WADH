@@ -6,6 +6,8 @@ namespace WADH.Core
     {
         private readonly string xmlFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MBODM", "WADH.xml");
 
+        public string Storage => xmlFile;
+
         public string DownloadFolder { get; private set; } = string.Empty;
 
         public IEnumerable<string> AddonUrls { get; private set; } = Enumerable.Empty<string>();
