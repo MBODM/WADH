@@ -18,7 +18,8 @@ namespace WADH
                     new ExternalToolsHelper(),
                     new ConfigReader(),
                     new ErrorLogger(),
-                    new FileSystemHelper()));
+                    new FileSystemHelper(),
+                    new WebViewHelper(new CurseHelper())));
         }
     }
 }

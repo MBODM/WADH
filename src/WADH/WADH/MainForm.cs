@@ -1,4 +1,4 @@
-using Microsoft.Web.WebView2.Core;
+using System.Xml.Linq;
 using WADH.Core;
 
 namespace WADH
@@ -9,31 +9,33 @@ namespace WADH
         private readonly IConfigReader configReader;
         private readonly IErrorLogger errorLogger;
         private readonly IFileSystemHelper fileSystemHelper;
+        private readonly IWebViewHelper webViewHelper;
 
-        private readonly WebViewHelper webViewHelper;
-
-        public MainForm(IExternalToolsHelper externalToolsHelper, IConfigReader configReader, IErrorLogger errorLogger, IFileSystemHelper fileSystemHelper)
+        public MainForm(
+            IExternalToolsHelper externalToolsHelper,
+            IConfigReader configReader,
+            IErrorLogger errorLogger,
+            IFileSystemHelper fileSystemHelper,
+            IWebViewHelper webViewHelper)
         {
             this.externalToolsHelper = externalToolsHelper ?? throw new ArgumentNullException(nameof(externalToolsHelper));
             this.configReader = configReader ?? throw new ArgumentNullException(nameof(configReader));
             this.errorLogger = errorLogger ?? throw new ArgumentNullException(nameof(errorLogger));
             this.fileSystemHelper = fileSystemHelper ?? throw new ArgumentNullException(nameof(fileSystemHelper));
+            this.webViewHelper = webViewHelper ?? throw new ArgumentNullException(nameof(webViewHelper));
 
             InitializeComponent();
 
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
             Size = new Size(1280, 800); /* 16:10 */
+            //panelWebView.Enabled = false;
             labelWauz.Visible = false;
-
-            webViewHelper = new WebViewHelper(webView);
         }
 
         private async void MainForm_Load(object sender, EventArgs e)
         {
-            await webViewHelper.ConfigureWebView();
-            webViewHelper.ShowStartPage();
-            webView.CoreWebView2.DownloadStarting += (s, e) => e.DownloadOperation.StateChanged += DownloadOperation_StateChanged;
+            await webViewHelper.InitAsync(webView);
 
             var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me, since the BL knows the impl type.
             if (!string.IsNullOrEmpty(configFolder))
@@ -50,68 +52,78 @@ namespace WADH
             }
         }
 
-        private async void DownloadOperation_StateChanged(object? sender, object e)
-        {
-            if (sender is CoreWebView2DownloadOperation downloadOperation)
-            {
-                if (downloadOperation.State == CoreWebView2DownloadState.Completed)
-                {
-                    progressBar.Value++;
-
-                    if (progressBar.Value >= progressBar.Maximum)
-                    {
-                        await Task.Delay(1500);
-
-                        labelStatus.Text = $"Download of {progressBar.Maximum} addons successfully finished.";
-                        buttonStart.Enabled = true;
-                        buttonClose.Enabled = true;
-                        buttonClose.Focus();
-
-                        return;
-                    }
-
-                    StartNextDownload();
-                }
-            }
-        }
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
         private async void ButtonStart_Click(object sender, EventArgs e)
         {
-            try
+            if (buttonStart.Text == "Start")
             {
-                configReader.ReadConfig();
+                buttonStart.Text = "Cancel";
+
+                try
+                {
+                    configReader.ReadConfig();
+                }
+                catch (Exception ex)
+                {
+                    errorLogger.Log(ex);
+                    ShowError("Error while loading config file (see log file for details).");
+
+                    return;
+                }
+
+                try
+                {
+                    configReader.ValidateConfig();
+                }
+                catch (Exception ex)
+                {
+                    ShowError(ex.Message);
+
+                    return;
+                }
+
+                //buttonStart.Enabled = false;
+                buttonClose.Enabled = false;
+                progressBar.Minimum = 0;
+                progressBar.Maximum = configReader.AddonUrls.Count();
+                progressBar.Value = progressBar.Minimum;
+
+                await InitDownloadFolder(configReader.DownloadFolder);
+
+                //labelStatus.Text = $"Downloading {name} ...";
+
+                //var tempForDebug = new List<string>() { configReader.AddonUrls.Where(url => url.Contains("/raiderio/")).First() };
+
+                //tempForDebug.Clear();
+
+                //tempForDebug.Add("attps://www.curseforge.com/wow/addons/coordinates/downloadz");
+
+                //webViewHelper.DownloadAddons(tempForDebug, configReader.DownloadFolder);
+
+                cts = new CancellationTokenSource();
+
+                try
+                {
+                    await webViewHelper.DownloadAddonsAsync(configReader.AddonUrls, configReader.DownloadFolder, new Progress<string>(s =>
+                    {
+                        labelStatus.Text = s;
+                    }), cts.Token);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                finally
+                {
+                    buttonStart.Text = "Start";
+                }
             }
-            catch (Exception ex)
+            else
             {
-                errorLogger.Log(ex);
-                ShowError("Error while loading config file (see log file for details).");
-
-                return;
+                buttonStart.Text = "Start";
+                cts.Cancel();
             }
-
-            try
-            {
-                configReader.ValidateConfig();
-            }
-            catch (Exception ex)
-            {
-                ShowError(ex.Message);
-
-                return;
-            }
-
-            await InitDownloadFolder(configReader.DownloadFolder);
-            webViewHelper.SetDownloadFolder(configReader.DownloadFolder);
-            await webViewHelper.ClearDownloadHistory();
-            webViewHelper.ShowDownloadHistoryDialog();
-
-            buttonStart.Enabled = false;
-            buttonClose.Enabled = false;
-            progressBar.Minimum = 0;
-            progressBar.Maximum = configReader.AddonUrls.Count();
-            progressBar.Value = progressBar.Minimum;
-
-            StartNextDownload();
         }
 
         private void ButtonClose_Click(object sender, EventArgs e)
@@ -131,15 +143,6 @@ namespace WADH
             {
                 Directory.CreateDirectory(folder);
             }
-        }
-
-        private void StartNextDownload()
-        {
-            var url = configReader.AddonUrls.ElementAt(progressBar.Value);
-            var name = url.Split("https://www.curseforge.com/wow/addons/").Last().Split("/download").First();
-
-            labelStatus.Text = $"Downloading {name} ...";
-            webViewHelper.NavigateToUrl(url);
         }
 
         private static string GetVersion()
