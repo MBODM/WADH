@@ -1,4 +1,3 @@
-using System.Xml.Linq;
 using WADH.Core;
 
 namespace WADH
@@ -28,16 +27,18 @@ namespace WADH
 
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
-            Size = new Size(1280, 800); /* 16:10 */
-            //panelWebView.Enabled = false;
+            Size = new Size(1280, 800); // 16:10 format.
+            panelWebView.Enabled = false; // Prevents user from clicking the web site.
             labelWauz.Visible = false;
+
+            Enabled = false;
         }
 
         private async void MainForm_Load(object sender, EventArgs e)
         {
             await webViewHelper.InitAsync(webView);
 
-            var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me, since the BL knows the impl type.
+            var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me, since the BL knows the impl type anyway.
             if (!string.IsNullOrEmpty(configFolder))
             {
                 labelConfig.ForeColor = new LinkLabel().LinkColor;
@@ -50,16 +51,16 @@ namespace WADH
                 labelWauz.Click += (s, e) => externalToolsHelper.OpenWauz();
                 labelWauz.Visible = true;
             }
-        }
 
-        private CancellationTokenSource cts = new CancellationTokenSource();
+            webViewHelper.ShowStartPage();
+
+            Enabled = true;
+        }
 
         private async void ButtonStart_Click(object sender, EventArgs e)
         {
             if (buttonStart.Text == "Start")
             {
-                buttonStart.Text = "Cancel";
-
                 try
                 {
                     configReader.ReadConfig();
@@ -83,64 +84,49 @@ namespace WADH
                     return;
                 }
 
-                //buttonStart.Enabled = false;
+                await InitDownloadFolder(configReader.DownloadFolder);
+
+                buttonStart.Text = "Cancel";
                 buttonClose.Enabled = false;
                 progressBar.Minimum = 0;
                 progressBar.Maximum = configReader.AddonUrls.Count();
                 progressBar.Value = progressBar.Minimum;
 
-                await InitDownloadFolder(configReader.DownloadFolder);
-
                 //labelStatus.Text = $"Downloading {name} ...";
 
                 //var tempForDebug = new List<string>() { configReader.AddonUrls.Where(url => url.Contains("/raiderio/")).First() };
-
                 //tempForDebug.Clear();
-
                 //tempForDebug.Add("attps://www.curseforge.com/wow/addons/coordinates/downloadz");
 
-                //webViewHelper.DownloadAddons(tempForDebug, configReader.DownloadFolder);
-
-                cts = new CancellationTokenSource();
-
-                try
-                {
-                    webViewHelper.DownloadAddonsAsyncCompleted += (s, e) =>
-                    {
-                        buttonStart.Text = "Start";
-
-                        if (e.Cancelled)
-                        {
-                            MessageBox.Show("Was cancelled");
-                        }
-
-                        if (e.Error != null)
-                        {
-                            MessageBox.Show("Had Error: " + e.Error.Message);
-                        }
-
-                        MessageBox.Show("Finished successfully.");
-                    };
-
-                    webViewHelper.DownloadAddonsAsyncProgressChanged += (s, e) =>
-                    {
-                        progressBar.Value = e.ProgressPercentage;
-                    };
-
-                    webViewHelper.DownloadAddonsAsync(configReader.AddonUrls, configReader.DownloadFolder);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-                finally
+                webViewHelper.DownloadAddonsAsyncCompleted += (s, e) =>
                 {
                     buttonStart.Text = "Start";
-                }
+
+                    if (e.Cancelled)
+                    {
+                        MessageBox.Show("Was cancelled");
+                    }
+                    else if (e.Error != null)
+                    {
+                        MessageBox.Show("Had Error: " + e.Error.Message);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Finished successfully.");
+                    }
+                };
+
+                webViewHelper.DownloadAddonsAsyncProgressChanged += (s, e) =>
+                {
+                    progressBar.Value = e.ProgressPercentage;
+                };
+
+                webViewHelper.DownloadAddonsAsync(configReader.AddonUrls, configReader.DownloadFolder);
+
+                // Todo: ExceptionHandling ???
             }
             else
             {
-                buttonStart.Text = "Start";
                 webViewHelper.CancelDownloadAddonsAsync();
             }
         }
