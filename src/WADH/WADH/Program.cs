@@ -19,7 +19,7 @@ namespace WADH
                     new ConfigReader(),
                     new ErrorLogger(),
                     new FileSystemHelper(),
-                    new WebViewHelper(new CurseHelper())));
+                    new WebViewHelper(new DebugWriter(), new CurseHelper())));
         }
     }
 }

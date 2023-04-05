@@ -1,6 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using WADH.Core;
@@ -16,10 +14,12 @@ namespace WADH
         private readonly Queue<string> addonUrls = new();
         private bool cancellationFlag = false;
 
+        private readonly IDebugWriter debugWriter;
         private readonly ICurseHelper curseHelper;
 
-        public WebViewHelper(ICurseHelper curseHelper)
+        public WebViewHelper(IDebugWriter debugWriter, ICurseHelper curseHelper)
         {
+            this.debugWriter = debugWriter ?? throw new ArgumentNullException(nameof(debugWriter));
             this.curseHelper = curseHelper ?? throw new ArgumentNullException(nameof(curseHelper));
         }
 
@@ -109,6 +109,7 @@ namespace WADH
                 throw new ArgumentException("Enumerable is empty.", nameof(addonUrls));
             }
 
+            this.addonUrls.Clear();
             addonUrls.ToList().ForEach(url => this.addonUrls.Enqueue(url));
 
             if (!isInitialized || webView == null)
@@ -153,12 +154,8 @@ namespace WADH
 
         private void WebView_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
-            DebugPrintHeader();
-
-            DebugPrintValues("e.Uri", e.Uri);
-            DebugPrintValues("e.NavigationId", e.NavigationId);
-            DebugPrintValues("e.Cancel", e.Cancel);
-            DebugPrintValues("e.IsRedirected", e.IsRedirected);
+            debugWriter.PrintEventHeader();
+            debugWriter.PrintNavigationStarting(e);
 
             // JS is disabled (cause of the Curse 5 sec timer), to navigate to the parsed href manually.
             // Therefore the 1st request, after the Curse addon site url, is not a redirect any longer.
@@ -168,14 +165,18 @@ namespace WADH
                 (curseHelper.IsRedirect2Url(e.Uri) && e.IsRedirected) ||
                 (curseHelper.IsRealDownloadUrl(e.Uri) && e.IsRedirected))
             {
-                DebugPrintInfo("Proceed with navigation, since url and redirect-state are both valid.");
-
+                debugWriter.PrintInfo("Url and redirect-state valid. --> Proceed with navigation.");
                 e.Cancel = false;
+
+                //if (curseHelper.IsAddonUrl(e.Uri))
+                //{
+                //    var progress = new WebViewHelperProgress("fuzz", "huzz", e.Uri, 0);
+                //    DownloadAddonsAsyncProgressChanged?.Invoke(this, new ProgressChangedEventArgs(100, progress));
+                //}
             }
             else
             {
-                DebugPrintInfo("Cancel navigation now, cause url is either none of the allowed Curse-Urls, or does not match the expected redirect-state.");
-
+                debugWriter.PrintInfo("Cancel navigation now, cause url is either none of the allowed Curse-Urls, or does not match the expected redirect-state.");
                 e.Cancel = true;
 
                 // Todo: Stop the whole process and make sure Completed handler is called with error.
@@ -185,7 +186,7 @@ namespace WADH
 
         private async void WebView_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
-            DebugPrintHeader();
+            debugWriter.PrintEventHeader();
 
             if (sender is WebView2 localWebView)
             {
@@ -198,34 +199,30 @@ namespace WADH
 
                 if (!string.IsNullOrEmpty(url))
                 {
-                    DebugPrintValues("sender.Source", url);
-                    DebugPrintValues("e.NavigationId", e.NavigationId);
-                    DebugPrintValues("e.IsSuccess", e.IsSuccess);
-                    DebugPrintValues("e.HttpStatusCode", e.HttpStatusCode);
-                    DebugPrintValues("e.WebErrorStatus", e.WebErrorStatus);
+                    debugWriter.PrintNavigationCompleted(e, url);
 
                     if (e.IsSuccess && e.HttpStatusCode == 200 && e.WebErrorStatus == CoreWebView2WebErrorStatus.Unknown)
                     {
                         if (!curseHelper.IsAddonUrl(url))
                         {
-                            DebugPrintInfo($"Stop the process now, cause only navigations to Curse-Addon-Urls are allowed at this stage.");
+                            debugWriter.PrintInfo($"Stop the process now, cause only navigations to a Curse-Addon-Url are allowed at this stage.");
 
                             // Todo: Stop the whole process and make sure Completed handler is called with error.
                         }
 
-                        DebugPrintInfo($"Execute script now, to fetch 'href' attribute from loaded Curse site ...");
+                        debugWriter.PrintInfo($"Execute script now, to fetch 'href' attribute from loaded Curse site ...");
 
                         await localWebView.ExecuteScriptAsync(curseHelper.AdjustPageAppearanceScript());
                         var href = await localWebView.ExecuteScriptAsync(curseHelper.GrabRedirectDownloadUrlScript());
 
                         href = href.Trim().Trim('"');
-                        DebugPrintInfo($"Script returned '{href}' as string.");
+                        debugWriter.PrintInfo($"Script returned '{href}' as string.");
 
                         if (curseHelper.IsRedirect1Url(href))
                         {
-                            DebugPrintInfo($"That returned string is a valid Curse-Redirect1-Url -> Manually navigating to that url now ...");
+                            debugWriter.PrintInfo($"That returned string is a valid Curse-Redirect1-Url. --> Manually navigate to that url now ...");
 
-                            // This reflects the central logic of the "prevent the 5 sec JS timer" concept.
+                            // This is the central logic part of the "prevent the 5 sec JS timer" concept.
                             // By disabling JS, fetching the 'href' manually and loading that url manually.
 
                             localWebView.Stop();
@@ -236,12 +233,12 @@ namespace WADH
                     {
                         if (!curseHelper.IsRedirect1Url(url))
                         {
-                            DebugPrintInfo($"Stop the process now, cause only navigations to Curse-Redirect1-Urls are allowed at this stage.");
+                            debugWriter.PrintInfo($"Stop the process now, cause only navigations to a Curse-Redirect1-Url are allowed at this stage.");
 
                             // Todo: Stop the whole process and make sure Completed handler is called with error.
                         }
 
-                        DebugPrintInfo($"The redirects and the Cloudflare processing has finished. Download should start now ...");
+                        debugWriter.PrintInfo($"Redirects and Cloudflare processing finished. --> Download should start now ...");
                     }
                     else
                     {
@@ -253,19 +250,14 @@ namespace WADH
 
         private void CoreWebView2_DownloadStarting(object? sender, CoreWebView2DownloadStartingEventArgs e)
         {
-            DebugPrintHeader();
+            debugWriter.PrintEventHeader();
+            debugWriter.PrintDownloadStarting(e);
 
-            DebugPrintValues("e.DownloadOperation.State", e.DownloadOperation.State);
-            DebugPrintValues("e.DownloadOperation.Uri", e.DownloadOperation.Uri);
-            DebugPrintValues("e.DownloadOperation.ResultFilePath", e.DownloadOperation.ResultFilePath);
-            DebugPrintValues("e.DownloadOperation.TotalBytesToReceive", e.DownloadOperation.TotalBytesToReceive);
-            DebugPrintValues("e.Cancel", e.Cancel);
+            debugWriter.PrintInfo("Register DownloadOperation.BytesReceivedChanged event-handler.");
+            debugWriter.PrintInfo("Register DownloadOperation.StateChanged event-handler.");
 
             e.DownloadOperation.BytesReceivedChanged += DownloadOperation_BytesReceivedChanged;
             e.DownloadOperation.StateChanged += DownloadOperation_StateChanged;
-            
-            DebugPrintInfo("Registered DownloadOperation.BytesReceivedChanged event handler.");
-            DebugPrintInfo("Registered DownloadOperation.StateChanged event handler.");
 
             e.Handled = true; // Do not show default download dialog
         }
@@ -282,13 +274,11 @@ namespace WADH
 
                 if ((ulong)downloadOperation.BytesReceived < downloadOperation.TotalBytesToReceive)
                 {
-                    DebugPrintHeader();
+                    debugWriter.PrintEventHeader();
+                    debugWriter.PrintBytesReceivedChanged(downloadOperation);
+                    debugWriter.PrintInfo($"Received {downloadOperation.BytesReceived} / {downloadOperation.TotalBytesToReceive} bytes.");
 
-                    DebugPrintValues("sender.State", downloadOperation.State);
-                    DebugPrintValues("sender.Uri", downloadOperation.Uri);
-                    DebugPrintInfo($"Received {downloadOperation.BytesReceived} / {downloadOperation.TotalBytesToReceive} bytes.");
-
-                    // We do this inside above if clause, to finish the download of smaller files.
+                    // Doing this inside above if clause, allows small file downloads to finish.
 
                     if (cancellationFlag)
                     {
@@ -298,26 +288,23 @@ namespace WADH
             }
         }
 
+        private int counter = 11;
+
         private void DownloadOperation_StateChanged(object? sender, object e)
         {
-            DebugPrintHeader();
+            debugWriter.PrintEventHeader();
 
             if (sender is CoreWebView2DownloadOperation downloadOperation)
             {
-                DebugPrintValues("sender.State", downloadOperation.State);
-                DebugPrintValues("sender.Uri", downloadOperation.Uri);
-                DebugPrintValues("sender.ResultFilePath", downloadOperation.ResultFilePath);
-                DebugPrintValues("sender.DownloadOperation.BytesReceived", downloadOperation.BytesReceived);
-                DebugPrintValues("sender.DownloadOperation.TotalBytesToReceive", downloadOperation.TotalBytesToReceive);
-                DebugPrintValues("sender.InterruptReason", downloadOperation.InterruptReason);
-                
+                debugWriter.PrintStateChanged(downloadOperation);
+
                 if (downloadOperation.State == CoreWebView2DownloadState.Completed || downloadOperation.State == CoreWebView2DownloadState.Interrupted)
                 {
+                    debugWriter.PrintInfo("Unregister DownloadOperation.BytesReceivedChanged event-handler.");
+                    debugWriter.PrintInfo("Unregister DownloadOperation.StateChanged event-handler.");
+
                     downloadOperation.BytesReceivedChanged -= DownloadOperation_BytesReceivedChanged;
                     downloadOperation.StateChanged -= DownloadOperation_StateChanged;
-
-                    DebugPrintInfo("Unregistered DownloadOperation.BytesReceivedChanged event handler.");
-                    DebugPrintInfo("Unregistered DownloadOperation.StateChanged event handler.");
 
                     if (webView == null) return; // Enforced by NRT
 
@@ -325,56 +312,33 @@ namespace WADH
                     {
                         // No more addons in queue to download, or cancellation happened.
 
-                        DebugPrintInfo(cancellationFlag ?
-                            $"Queue of urls is not empty yet, but CANCELLATION was detected -> Means: STOP AND NOT PROCEED WITH NEXT URL!" :
-                            "Queue of urls is empty, so there is nothing else to download -> Means: ALL DOWNLOADS FINISHED SUCCESSFULLY!");
-                        
+                        debugWriter.PrintInfo(cancellationFlag ?
+                            $"Queue of urls is not empty yet, but CANCELLATION was detected. --> STOP AND NOT PROCEED WITH NEXT URL!" :
+                            "Queue of urls is empty, so there is nothing else to download. --> ALL DOWNLOADS FINISHED SUCCESSFULLY!");
+
                         webView.NavigationStarting -= WebView_NavigationStarting;
                         webView.NavigationCompleted -= WebView_NavigationCompleted;
                         webView.CoreWebView2.DownloadStarting -= CoreWebView2_DownloadStarting;
-                        
+
                         DownloadAddonsAsyncCompleted?.Invoke(this, new AsyncCompletedEventArgs(null, cancellationFlag, null));
                     }
                     else
                     {
                         // Still some addons in queue to download, so proceed with next url.
-                        
+
+                        var progress = new WebViewHelperProgress("fuzz", "huzz", downloadOperation.Uri, 0);
+
+                        counter++;
+                        var percent = (counter * 100) / 11;
+
+                        DownloadAddonsAsyncProgressChanged?.Invoke(this, new ProgressChangedEventArgs((int)percent, progress));
+
                         var url = addonUrls.Dequeue();
-                        DebugPrintInfo($"Queue of urls is not empty yet, so proceed with next url in queue -> {url}");
+                        debugWriter.PrintInfo($"Queue of urls is not empty yet, so proceed with next url in queue. --> {url}");
                         webView.Source = new Uri(url);
                     }
                 }
             }
-        }
-
-        private static void DebugPrintHeader([CallerMemberName] string caller = "")
-        {
-            Debug.WriteLine($"--------------------------------------------------------------------------------");
-
-            if (Debugger.IsAttached)
-            {
-                var name = $"{nameof(WebViewHelper)}.{caller}";
-
-                if (name.Contains("_"))
-                {
-                    // At the moment printing happens only inside of event handlers.
-                    // Showing only the event name increase debug output readability.
-
-                    name = name.Split('_').Last();
-                }
-
-                Debug.WriteLine($"[{name}]");
-            }
-        }
-
-        private static void DebugPrintValues<T>(string key, T value)
-        {
-            Debug.WriteLine($"{key} = {value}");
-        }
-
-        private static void DebugPrintInfo(string line)
-        {
-            Debug.WriteLine($"Info: {line}");
         }
     }
 }

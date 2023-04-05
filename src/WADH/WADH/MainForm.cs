@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using WADH.Core;
 
 namespace WADH
@@ -69,7 +70,6 @@ namespace WADH
                 {
                     errorLogger.Log(ex);
                     ShowError("Error while loading config file (see log file for details).");
-
                     return;
                 }
 
@@ -80,7 +80,6 @@ namespace WADH
                 catch (Exception ex)
                 {
                     ShowError(ex.Message);
-
                     return;
                 }
 
@@ -89,37 +88,18 @@ namespace WADH
                 buttonStart.Text = "Cancel";
                 buttonClose.Enabled = false;
                 progressBar.Minimum = 0;
-                progressBar.Maximum = configReader.AddonUrls.Count();
+                progressBar.Maximum = 100;
                 progressBar.Value = progressBar.Minimum;
+                labelStatus.Text = "Downloading...";
 
-                //labelStatus.Text = $"Downloading {name} ...";
+                webViewHelper.DownloadAddonsAsyncCompleted += WebViewHelper_DownloadAddonsAsyncCompleted;
+                webViewHelper.DownloadAddonsAsyncProgressChanged += WebViewHelper_DownloadAddonsAsyncProgressChanged;
+
+                
 
                 //var tempForDebug = new List<string>() { configReader.AddonUrls.Where(url => url.Contains("/raiderio/")).First() };
                 //tempForDebug.Clear();
                 //tempForDebug.Add("attps://www.curseforge.com/wow/addons/coordinates/downloadz");
-
-                webViewHelper.DownloadAddonsAsyncCompleted += (s, e) =>
-                {
-                    buttonStart.Text = "Start";
-
-                    if (e.Cancelled)
-                    {
-                        MessageBox.Show("Was cancelled");
-                    }
-                    else if (e.Error != null)
-                    {
-                        MessageBox.Show("Had Error: " + e.Error.Message);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Finished successfully.");
-                    }
-                };
-
-                webViewHelper.DownloadAddonsAsyncProgressChanged += (s, e) =>
-                {
-                    progressBar.Value = e.ProgressPercentage;
-                };
 
                 webViewHelper.DownloadAddonsAsync(configReader.AddonUrls, configReader.DownloadFolder);
 
@@ -127,6 +107,8 @@ namespace WADH
             }
             else
             {
+                buttonStart.Enabled = false;
+
                 webViewHelper.CancelDownloadAddonsAsync();
             }
         }
@@ -134,6 +116,36 @@ namespace WADH
         private void ButtonClose_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void WebViewHelper_DownloadAddonsAsyncProgressChanged(object? sender, ProgressChangedEventArgs e)
+        {
+            progressBar.Value = e.ProgressPercentage;
+
+            if (e.UserState is WebViewHelperProgress progress)
+            {
+                labelStatus.Text = progress.DownloadUrl;
+            }
+        }
+
+        private void WebViewHelper_DownloadAddonsAsyncCompleted(object? sender, AsyncCompletedEventArgs e)
+        {
+            buttonStart.Text = "Start";
+            buttonStart.Enabled = true;
+            buttonClose.Enabled = true;
+
+            if (e.Cancelled)
+            {
+                labelStatus.Text = "Cancelled";
+            }
+            else if (e.Error != null)
+            {
+                labelStatus.Text = $"Error: {e.Error.Message}";
+            }
+            else
+            {
+                labelStatus.Text = $"Download of {configReader.AddonUrls.Count()} addons successfully finished";
+            }
         }
 
         private async Task InitDownloadFolder(string folder)
