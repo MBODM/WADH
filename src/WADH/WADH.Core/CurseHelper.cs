@@ -30,7 +30,7 @@
             return url.StartsWith("https://mediafilez.forgecdn.net/files/") && url.EndsWith(".zip");
         }
 
-        public string GetAddonNameFromUrl(string url)
+        public string GetAddonNameFromAddonUrl(string url)
         {
             url = Guard(url);
 

@@ -105,10 +105,29 @@ namespace WADH
 
                 try
                 {
-                    await webViewHelper.DownloadAddonsAsync(configReader.AddonUrls, configReader.DownloadFolder, new Progress<string>(s =>
+                    webViewHelper.DownloadAddonsAsyncCompleted += (s, e) =>
                     {
-                        labelStatus.Text = s;
-                    }), cts.Token);
+                        buttonStart.Text = "Start";
+
+                        if (e.Cancelled)
+                        {
+                            MessageBox.Show("Was cancelled");
+                        }
+
+                        if (e.Error != null)
+                        {
+                            MessageBox.Show("Had Error: " + e.Error.Message);
+                        }
+
+                        MessageBox.Show("Finished successfully.");
+                    };
+
+                    webViewHelper.DownloadAddonsAsyncProgressChanged += (s, e) =>
+                    {
+                        progressBar.Value = e.ProgressPercentage;
+                    };
+
+                    webViewHelper.DownloadAddonsAsync(configReader.AddonUrls, configReader.DownloadFolder);
                 }
                 catch (Exception ex)
                 {
@@ -122,7 +141,7 @@ namespace WADH
             else
             {
                 buttonStart.Text = "Start";
-                cts.Cancel();
+                webViewHelper.CancelDownloadAddonsAsync();
             }
         }
 
