@@ -5,6 +5,7 @@
         AddonStarting,
         CurseAddonSiteLoaded,
         CursePreludeProgress,
+        CursePreludeFinished,
         DownloadStarting,
         DownloadProgress,
         DownloadFinished,

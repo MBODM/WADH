@@ -119,12 +119,12 @@ namespace WADH
         {
             if (e.UserState is WebViewHelperProgress progress)
             {
-                if (progress.State == WebViewHelperProgressState.Starting)
+                if (progress.State == WebViewHelperProgressState.AddonStarting)
                 {
-                    labelStatus.Text = progress.Name;
+                    labelStatus.Text = progress.Addon;
                 }
 
-                if (progress.State == WebViewHelperProgressState.Finished)
+                if (progress.State == WebViewHelperProgressState.AddonFinished)
                 {
                     progressBar.Value = e.ProgressPercentage;
                 }
