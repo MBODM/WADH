@@ -90,13 +90,10 @@ namespace WADH
                 progressBar.Minimum = 0;
                 progressBar.Maximum = 100;
                 progressBar.Value = progressBar.Minimum;
-                labelStatus.Text = "Downloading...";
 
                 webViewHelper.DownloadAddonsAsyncCompleted += WebViewHelper_DownloadAddonsAsyncCompleted;
                 webViewHelper.DownloadAddonsAsyncProgressChanged += WebViewHelper_DownloadAddonsAsyncProgressChanged;
-
                 
-
                 //var tempForDebug = new List<string>() { configReader.AddonUrls.Where(url => url.Contains("/raiderio/")).First() };
                 //tempForDebug.Clear();
                 //tempForDebug.Add("attps://www.curseforge.com/wow/addons/coordinates/downloadz");
@@ -120,11 +117,17 @@ namespace WADH
 
         private void WebViewHelper_DownloadAddonsAsyncProgressChanged(object? sender, ProgressChangedEventArgs e)
         {
-            progressBar.Value = e.ProgressPercentage;
-
             if (e.UserState is WebViewHelperProgress progress)
             {
-                labelStatus.Text = progress.DownloadUrl;
+                if (progress.State == WebViewHelperProgressState.Starting)
+                {
+                    labelStatus.Text = progress.Name;
+                }
+
+                if (progress.State == WebViewHelperProgressState.Finished)
+                {
+                    progressBar.Value = e.ProgressPercentage;
+                }
             }
         }
 

@@ -26,7 +26,7 @@ namespace WADH
             }
         }
 
-        public void PrintNavigationStarting(CoreWebView2NavigationStartingEventArgs e)
+        public void PrintEventNavigationStarting(CoreWebView2NavigationStartingEventArgs e)
         {
             PrintValue("e.Uri", e.Uri);
             PrintValue("e.NavigationId", e.NavigationId);
@@ -34,7 +34,7 @@ namespace WADH
             PrintValue("e.IsRedirected", e.IsRedirected);
         }
 
-        public void PrintNavigationCompleted(CoreWebView2NavigationCompletedEventArgs e, string url)
+        public void PrintEventNavigationCompleted(CoreWebView2NavigationCompletedEventArgs e, string url)
         {
             PrintValue("sender.Source", url);
             PrintValue("e.NavigationId", e.NavigationId);
@@ -43,7 +43,7 @@ namespace WADH
             PrintValue("e.WebErrorStatus", e.WebErrorStatus);
         }
 
-        public void PrintDownloadStarting(CoreWebView2DownloadStartingEventArgs e)
+        public void PrintEventDownloadStarting(CoreWebView2DownloadStartingEventArgs e)
         {
             PrintValue("e.DownloadOperation.State", e.DownloadOperation.State);
             PrintValue("e.DownloadOperation.Uri", e.DownloadOperation.Uri);
@@ -52,13 +52,13 @@ namespace WADH
             PrintValue("e.Cancel", e.Cancel);
         }
 
-        public void PrintBytesReceivedChanged(CoreWebView2DownloadOperation sender)
+        public void PrintEventReceivedChanged(CoreWebView2DownloadOperation sender)
         {
             PrintValue("sender.State", sender.State);
             PrintValue("sender.Uri", sender.Uri);
         }
 
-        public void PrintStateChanged(CoreWebView2DownloadOperation sender)
+        public void PrintEventStateChanged(CoreWebView2DownloadOperation sender)
         {
             PrintValue("sender.State", sender.State);
             PrintValue("sender.Uri", sender.Uri);

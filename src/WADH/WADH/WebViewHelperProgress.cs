@@ -1,4 +1,10 @@
 ﻿namespace WADH
 {
-    public sealed record WebViewHelperProgress(string AddonName, string AddonUrl, string DownloadUrl, ulong AddonSize);
+    public sealed record WebViewHelperProgress(
+        WebViewHelperProgressState State,
+        string Url,
+        string Info = "",
+        string Addon = "",
+        ulong Received = 0,
+        ulong Total = 0);
 }

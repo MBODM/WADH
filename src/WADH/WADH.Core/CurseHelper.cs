@@ -4,37 +4,51 @@
     {
         public bool IsAddonUrl(string url)
         {
-            url = Guard(url);
             // https://www.curseforge.com/wow/addons/coordinates/download
+            url = Guard(url);
             return url.StartsWith("https://www.curseforge.com/wow/addons/") && url.EndsWith("/download");
         }
 
         public bool IsRedirect1Url(string url)
         {
-            url = Guard(url);
             // https://www.curseforge.com/wow/addons/coordinates/download/4364314/file
-            return url.StartsWith("https://www.curseforge.com/wow/addons/") && url.Contains("/download/") && url.EndsWith("/file");
+            url = Guard(url);
+            return url.StartsWith("https://www.curseforge.com/wow/addons/") && url.EndsWith("/file");
         }
 
         public bool IsRedirect2Url(string url)
         {
-            url = Guard(url);
             // https://edge.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip?api-key=267C6CA3
+            url = Guard(url);
             return url.StartsWith("https://edge.forgecdn.net/files/") && url.Contains("?api-key=");
         }
 
-        public bool IsRealDownloadUrl(string url)
+        public bool IsDownloadUrl(string url)
         {
-            url = Guard(url);
             // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
+            url = Guard(url);
             return url.StartsWith("https://mediafilez.forgecdn.net/files/") && url.EndsWith(".zip");
         }
 
         public string GetAddonNameFromAddonUrl(string url)
         {
+            // https://www.curseforge.com/wow/addons/coordinates/download
             url = Guard(url);
+            return IsAddonUrl(url) ? url.Split("addons/").Last().Split("/download").First().ToLower() : string.Empty;
+        }
 
-            return IsAddonUrl(url) ? url.Split("https://www.curseforge.com/wow/addons/").Last().Split("/download").First() : string.Empty;
+        public string GetFileNameFromDownloadUrl(string url)
+        {
+            // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
+            url = Guard(url);
+            return IsDownloadUrl(url) ? url.Split('/').Last() : string.Empty;
+        }
+
+        public string GetAddonNameFromDownloadUrl(string url)
+        {
+            // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
+            var file = GetFileNameFromDownloadUrl(url);
+            return file.Contains('-') ? file.Split('-').First().ToLower() : string.Empty;
         }
 
         public string AdjustPageAppearanceScript()

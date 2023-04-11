@@ -6,11 +6,11 @@ namespace WADH
     public interface IDebugWriter
     {
         void PrintEventHeader([CallerMemberName] string caller = "");
-        void PrintNavigationStarting(CoreWebView2NavigationStartingEventArgs e);
-        void PrintNavigationCompleted(CoreWebView2NavigationCompletedEventArgs e, string url);
-        void PrintDownloadStarting(CoreWebView2DownloadStartingEventArgs e);
-        void PrintBytesReceivedChanged(CoreWebView2DownloadOperation sender);
-        void PrintStateChanged(CoreWebView2DownloadOperation sender);
+        void PrintEventNavigationStarting(CoreWebView2NavigationStartingEventArgs e);
+        void PrintEventNavigationCompleted(CoreWebView2NavigationCompletedEventArgs e, string url);
+        void PrintEventDownloadStarting(CoreWebView2DownloadStartingEventArgs e);
+        void PrintEventReceivedChanged(CoreWebView2DownloadOperation sender);
+        void PrintEventStateChanged(CoreWebView2DownloadOperation sender);
         void PrintInfo(string s);
     }
 }
