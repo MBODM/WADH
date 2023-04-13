@@ -60,6 +60,14 @@ namespace WADH
 
         private async void ButtonStart_Click(object sender, EventArgs e)
         {
+            if (buttonStart.Text == "Cancel")
+            {
+                buttonStart.Enabled = false; // Prevents button/logic jitter (button will become active again in EAP Completed event).
+                webViewHelper.CancelDownloadAddonsAsync(); 
+
+                return;
+            }
+
             if (buttonStart.Text == "Start")
             {
                 try
@@ -70,6 +78,7 @@ namespace WADH
                 {
                     errorLogger.Log(ex);
                     ShowError("Error while loading config file (see log file for details).");
+
                     return;
                 }
 
@@ -80,33 +89,40 @@ namespace WADH
                 catch (Exception ex)
                 {
                     ShowError(ex.Message);
+
                     return;
                 }
 
                 await InitDownloadFolder(configReader.DownloadFolder);
 
                 buttonStart.Text = "Cancel";
+                buttonStart.Enabled = false; // Prevents button/logic jitter (button will become active again in EAP Progress event).
                 buttonClose.Enabled = false;
+
                 progressBar.Minimum = 0;
                 progressBar.Maximum = 100;
                 progressBar.Value = progressBar.Minimum;
 
                 webViewHelper.DownloadAddonsAsyncCompleted += WebViewHelper_DownloadAddonsAsyncCompleted;
                 webViewHelper.DownloadAddonsAsyncProgressChanged += WebViewHelper_DownloadAddonsAsyncProgressChanged;
-                
+
                 //var tempForDebug = new List<string>() { configReader.AddonUrls.Where(url => url.Contains("/raiderio/")).First() };
                 //tempForDebug.Clear();
                 //tempForDebug.Add("attps://www.curseforge.com/wow/addons/coordinates/downloadz");
 
-                webViewHelper.DownloadAddonsAsync(configReader.AddonUrls, configReader.DownloadFolder);
+                try
+                {
+                    webViewHelper.DownloadAddonsAsync(configReader.AddonUrls, configReader.DownloadFolder);
+                }
+                catch (Exception ex)
+                {
+                    errorLogger.Log(ex);
+                    ShowError("Error while starting download (see log file for details).");
 
-                // Todo: ExceptionHandling ???
-            }
-            else
-            {
-                buttonStart.Enabled = false;
-
-                webViewHelper.CancelDownloadAddonsAsync();
+                    buttonStart.Text = "Start";
+                    buttonStart.Enabled = true;
+                    buttonClose.Enabled = true;
+                }
             }
         }
 
@@ -121,12 +137,31 @@ namespace WADH
             {
                 if (progress.State == WebViewHelperProgressState.AddonStarting)
                 {
-                    labelStatus.Text = progress.Addon;
+                    buttonStart.Enabled = true; // Prevents button/logic jitter.
+                    labelStatus.Text = $"Processing {progress.Addon}";
                 }
 
                 if (progress.State == WebViewHelperProgressState.AddonFinished)
                 {
                     progressBar.Value = e.ProgressPercentage;
+                }
+
+                if (progress.State == WebViewHelperProgressState.DownloadProgress)
+                {
+                    labelStatus.Text = $"Downloading {progress.Addon}";
+
+                    // This is not necessary here, since this event/state combination happens for large addons only.
+                    // But relying on some implementation is evil, so it is better to make sure it is a large addon.
+
+                    ulong oneMegaByte = 1024 * 1024;
+
+                    if (progress.Total > oneMegaByte)
+                    {
+                        var received = (double)(progress.Received / 1024) / 1024;
+                        var total = (double)(progress.Total / 1024) / 1024;
+
+                        labelStatus.Text += $" ({received:0.##} MB / {total:0.##} MB)";
+                    }
                 }
             }
         }

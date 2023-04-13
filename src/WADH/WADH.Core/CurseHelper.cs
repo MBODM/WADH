@@ -2,6 +2,9 @@
 {
     public sealed class CurseHelper : ICurseHelper
     {
+        public string AdjustPageAppearanceScript => GetAdjustPageAppearanceScript();
+        public string GrabRedirectDownloadUrlScript => GetGrabRedirectDownloadUrlScript();
+
         public bool IsAddonUrl(string url)
         {
             // https://www.curseforge.com/wow/addons/coordinates/download
@@ -37,6 +40,20 @@
             return IsAddonUrl(url) ? url.Split("addons/").Last().Split("/download").First().ToLower() : string.Empty;
         }
 
+        public string GetAddonNameFromRedirect1Url(string url)
+        {
+            // https://www.curseforge.com/wow/addons/coordinates/download/4364314/file
+            url = Guard(url);
+            return IsRedirect1Url(url) ? url.Split("addons/").Last().Split("/download").First().ToLower() : string.Empty;
+        }
+
+        public string GetAddonNameFromDownloadUrl(string url)
+        {
+            // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
+            url = Guard(url);
+            return IsDownloadUrl(url) ? url.Split('/').Last().Split('-').First().ToLower() : string.Empty;
+        }
+
         public string GetFileNameFromDownloadUrl(string url)
         {
             // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
@@ -44,14 +61,7 @@
             return IsDownloadUrl(url) ? url.Split('/').Last() : string.Empty;
         }
 
-        public string GetAddonNameFromDownloadUrl(string url)
-        {
-            // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
-            var file = GetFileNameFromDownloadUrl(url);
-            return file.Contains('-') ? file.Split('-').First().ToLower() : string.Empty;
-        }
-
-        public string AdjustPageAppearanceScript()
+        private static string GetAdjustPageAppearanceScript()
         {
             // The app disables the JS engine, before loading the addon page, to prevent the 5 sec timer (JS) from running.
             // With disabled JS some noscript tags become active and all relevant information is no longer visible at top.
@@ -64,7 +74,7 @@
                 "if (noscripts.length >= 2) noscripts[1].remove();";
         }
 
-        public string GrabRedirectDownloadUrlScript()
+        private static string GetGrabRedirectDownloadUrlScript()
         {
             // The app disables the JS engine, loads the addon site, grabs the initial download url from that site (this script)
             // and re-enables the JS engine. Then the app navigates to the grabbed download url (with JS engine enabled), so the

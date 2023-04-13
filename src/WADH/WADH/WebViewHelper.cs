@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Security.Policy;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using WADH.Core;
@@ -10,12 +9,13 @@ namespace WADH
     {
         private const string NotInitializedError = "This instance was not initialized. Please call the initialization method first.";
 
-        private WebView2? webView = null;
         private bool isInitialized = false;
+        private WebView2? webView = null;
+        private bool isRunning = false;
         private bool cancellationRequested = false;
         private int addonCount = 0;
+        private ulong navigationId = 0;
         private int finishedDownloads = 0;
-        private bool isRunning = false;
 
         private readonly Queue<string> addonUrls = new();
 
@@ -125,12 +125,11 @@ namespace WADH
             }
 
             isRunning = true;
+            cancellationRequested = false;
 
             this.addonUrls.Clear();
             addonUrls.ToList().ForEach(url => this.addonUrls.Enqueue(url));
             addonCount = addonUrls.Count();
-
-            cancellationRequested = false;
 
             webView.CoreWebView2.Profile.DefaultDownloadFolderPath = Path.GetFullPath(downloadFolder);
 
@@ -174,28 +173,29 @@ namespace WADH
             // Therefore the 1st request, after the Curse addon site url, is not a redirect any longer.
 
             if ((curseHelper.IsAddonUrl(e.Uri) && !e.IsRedirected) ||
-                (curseHelper.IsRedirect1Url(e.Uri) && !e.IsRedirected) ||
-                (curseHelper.IsRedirect2Url(e.Uri) && e.IsRedirected) ||
-                (curseHelper.IsDownloadUrl(e.Uri) && e.IsRedirected))
+                (curseHelper.IsRedirect1Url(e.Uri) && !e.IsRedirected && e.NavigationId != navigationId) ||
+                (curseHelper.IsRedirect2Url(e.Uri) && e.IsRedirected && e.NavigationId == navigationId) ||
+                (curseHelper.IsDownloadUrl(e.Uri) && e.IsRedirected && e.NavigationId == navigationId))
             {
-                debugWriter.PrintInfo("Url is an allowed Curse-Url and redirect-state does match. -- > Proceed with navigation.");
-                var info = "Navigation continues, cause url and redirect-state are valid.";
+                debugWriter.PrintInfo("Valid url, navigation-id and redirect-state. -- > Proceed with navigation.");
+                var info = "Navigation continues, cause of valid url, navigation-id and redirect-state.";
 
                 if (curseHelper.IsAddonUrl(e.Uri))
                 {
-                    var addon = curseHelper.GetAddonNameFromAddonUrl(e.Uri);
-                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.AddonStarting, e.Uri, info, addon);
+                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.AddonStarting, e.Uri, info, curseHelper.GetAddonNameFromAddonUrl(e.Uri));
                 }
                 else
                 {
                     OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.CursePreludeProgress, e.Uri, info);
                 }
 
+                navigationId = e.NavigationId;
+
                 return;
             }
 
-            debugWriter.PrintInfo("Url is either not an allowed Curse-Url, or redirect-state does not match. --> Cancel navigation now.");
-            OnDownloadAddonsAsyncCompleted(false, new InvalidOperationException("Navigation cancels, cause of invalid url or invalid redirect-state."));
+            debugWriter.PrintInfo("Invalid url, navigation-id or redirect-state. --> Cancel navigation now.");
+            OnDownloadAddonsAsyncCompleted(false, "Navigation cancels, cause of invalid url, navigation-id or redirect-state.");
 
             e.Cancel = true; // Todo: Do we need webView.Stop() here, when e.Cancel = true ???
         }
@@ -204,21 +204,28 @@ namespace WADH
         {
             debugWriter.PrintEventHeader();
 
-            if (sender is WebView2 localWebView)
+            if (sender is WebView2 webViewLocal)
             {
                 // At the time of writing this code the EventArgs e still not including the Uri.
                 // Therefore using the WebView´s Source property value as some workaround here.
                 // This should be no problem since the navigations are not running concurrently.
                 // Have a look at https://github.com/MicrosoftEdge/WebView2Feedback/issues/580
 
-                var url = localWebView.Source.ToString();
+                var url = webViewLocal.Source.ToString();
 
                 if (!string.IsNullOrEmpty(url))
                 {
                     debugWriter.PrintEventNavigationCompleted(e, url);
 
-                    // Success (addon site loaded)
+                    // Note: Redirects do not raise this event (in contrast to the starting event).
+                    // Therefore only the initial url and the last redirect will raise this event.
+                    // Also note: WebView2 does not change its Source property value, on redirects.
+                    // And since there exists no easy way to get the actual redirect location url,
+                    // it is not possible to get the url for the last/2nd occurrence of this event.
+
+                    // Success #1 (addon site loaded)
                     if (curseHelper.IsAddonUrl(url) &&
+                        e.NavigationId == navigationId &&
                         e.IsSuccess &&
                         e.HttpStatusCode == 200 &&
                         e.WebErrorStatus == CoreWebView2WebErrorStatus.Unknown)
@@ -226,51 +233,52 @@ namespace WADH
                         debugWriter.PrintInfo("Navigation to Curse addon site successfully completed.");
                         debugWriter.PrintInfo("Execute script now, to fetch 'href' attribute from loaded Curse addon site ...");
 
-                        await localWebView.ExecuteScriptAsync(curseHelper.AdjustPageAppearanceScript());
-                        var href = await localWebView.ExecuteScriptAsync(curseHelper.GrabRedirectDownloadUrlScript());
+                        await webViewLocal.ExecuteScriptAsync(curseHelper.AdjustPageAppearanceScript);
+                        var href = await webViewLocal.ExecuteScriptAsync(curseHelper.GrabRedirectDownloadUrlScript);
 
                         href = href.Trim().Trim('"');
-                        debugWriter.PrintInfo($"Script returned '{href}' as string.");
+                        debugWriter.PrintInfo($"Script returned href as string. --> {href}");
 
                         if (curseHelper.IsRedirect1Url(href))
                         {
                             debugWriter.PrintInfo("That returned string is a valid Curse-Redirect1-Url. --> Manually navigate to that url now ...");
-                            
                             OnDownloadAddonsAsyncProgressChanged(
                                 WebViewHelperProgressState.CurseAddonSiteLoaded,
                                 url,
-                                $"Fetched '{href}' from Curse addon site.",
+                                $"Fetched href ('{href}') from Curse addon site.",
                                 curseHelper.GetAddonNameFromAddonUrl(url));
 
                             // This is the central logic part of the "prevent the 5 sec JS timer" concept.
                             // By disabling JS, fetching the 'href' manually and loading that url manually.
 
-                            localWebView.Stop();
-                            localWebView.Source = new Uri(href);
+                            webViewLocal.Stop();
+                            webViewLocal.Source = new Uri(href);
 
                             return;
                         }
                     }
 
-                    // Note: Redirects do not raise this event (in contrast to the starting event).
-                    // Therefore only addon site and last redirect will lead to this event handler.
-                    // Also note: There exists no easy way to get the actual redirect location url.
-
-                    // Success (redirects/Cloudflare finished)
-                    if (!e.IsSuccess && e.HttpStatusCode == 0 && e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted)
+                    // Success #2 (redirects/Cloudflare finished)
+                    if (curseHelper.IsRedirect1Url(url) &&
+                        e.NavigationId == navigationId &&
+                        !e.IsSuccess &&
+                        e.HttpStatusCode == 0 &&
+                        e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted)
                     {
-                        debugWriter.PrintInfo("Redirects/Cloudflare processing finished. -- > Download should start now ...");
-                        OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.CursePreludeFinished, url);
+                        debugWriter.PrintInfo("Redirects/Cloudflare processing successfully finished. -- > Download should start now ...");
+                        OnDownloadAddonsAsyncProgressChanged(
+                            WebViewHelperProgressState.CursePreludeFinished,
+                            "There is no easy way to show the real (redirected) url here.",
+                            "Curse prelude finished. Download should start now.",
+                            curseHelper.GetAddonNameFromRedirect1Url(url));
 
                         return;
                     }
 
-                    
-                    
                     // Error
-                    debugWriter.PrintInfo("Url is either not an allowed Curse-Url, or status-codes do not match. --> Stop navigation now.");
-                    localWebView.Stop();
-                    OnDownloadAddonsAsyncCompleted(false, new InvalidOperationException("Navigation stopped, cause of invalid url or invalid status-codes."));
+                    debugWriter.PrintInfo("Invalid url, navigation-id or status-codes. --> Stop navigation now.");
+                    webViewLocal.Stop();
+                    OnDownloadAddonsAsyncCompleted(false, "Navigation stopped, cause of invalid url, navigation-id or status-codes.");
                 }
             }
         }
@@ -286,13 +294,16 @@ namespace WADH
             e.DownloadOperation.BytesReceivedChanged += DownloadOperation_BytesReceivedChanged;
             e.DownloadOperation.StateChanged += DownloadOperation_StateChanged;
 
+            var file = Path.GetFileName(e.ResultFilePath);
             var url = e.DownloadOperation.Uri;
 
+            debugWriter.PrintInfo($"Starting file download --> {file}");
             OnDownloadAddonsAsyncProgressChanged(
                 WebViewHelperProgressState.DownloadStarting,
                 url,
-                curseHelper.GetFileNameFromDownloadUrl(url),
+                "Starting file download.",
                 curseHelper.GetAddonNameFromDownloadUrl(url),
+                file,
                 0,
                 e.DownloadOperation.TotalBytesToReceive ?? 0);
 
@@ -303,9 +314,6 @@ namespace WADH
         {
             if (sender is CoreWebView2DownloadOperation downloadOperation)
             {
-                var url = downloadOperation.Uri;
-                var file = curseHelper.GetFileNameFromDownloadUrl(url);
-                var addon = curseHelper.GetAddonNameFromDownloadUrl(url);
                 var received = (ulong)downloadOperation.BytesReceived;
                 var total = downloadOperation.TotalBytesToReceive ?? 0;
 
@@ -321,7 +329,11 @@ namespace WADH
                     debugWriter.PrintEventReceivedChanged(downloadOperation);
                     debugWriter.PrintInfo($"Received {received} of {total} bytes.");
 
-                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.DownloadProgress, url, file, addon, received, total);
+                    var url = downloadOperation.Uri;
+                    var file = Path.GetFileName(downloadOperation.ResultFilePath);
+                    var addon = curseHelper.GetAddonNameFromDownloadUrl(url);
+
+                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.DownloadProgress, url, "Downloading file...", addon, file, received, total);
 
                     // Doing this inside above if clause, allows small file downloads to finish.
 
@@ -344,6 +356,7 @@ namespace WADH
                 if (downloadOperation.State == CoreWebView2DownloadState.InProgress)
                 {
                     debugWriter.PrintInfo("Warning: State is 'InProgress' and this usually does not happen. --> Anyway, continue with download.");
+
                     return;
                 }
 
@@ -354,15 +367,17 @@ namespace WADH
                 downloadOperation.StateChanged -= DownloadOperation_StateChanged;
 
                 var url = downloadOperation.Uri;
-                var addon = curseHelper.GetFileNameFromDownloadUrl(url);
-                var file = curseHelper.GetAddonNameFromDownloadUrl(url);
+                var addon = curseHelper.GetAddonNameFromDownloadUrl(url);
+                var file = Path.GetFileName(downloadOperation.ResultFilePath);
                 var received = (ulong)downloadOperation.BytesReceived;
                 var total = downloadOperation.TotalBytesToReceive ?? 0;
 
                 if (downloadOperation.State == CoreWebView2DownloadState.Completed)
                 {
                     finishedDownloads++;
-                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.DownloadFinished, url, file, addon, received, total);
+
+                    debugWriter.PrintInfo($"Finished a file download --> {file}");
+                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.DownloadFinished, url, "Finished file download.", addon, file, received, total);
                 }
 
                 if (webView == null) return; // Enforced by NRT
@@ -370,10 +385,6 @@ namespace WADH
                 if (!addonUrls.Any() || cancellationRequested)
                 {
                     // No more addons in queue to download or cancellation occurred, so finish the process.
-
-                    debugWriter.PrintInfo(cancellationRequested ?
-                        "Queue of urls is not empty yet, but cancellation occurred. --> !!! Stop and not proceed with next url !!!" :
-                        "Queue of urls is empty, there is nothing else to download. --> !!! All downloads successfully finished !!!");
 
                     debugWriter.PrintInfo("Unregister event handler --> NavigationStarting");
                     debugWriter.PrintInfo("Unregister event handler --> NavigationCompleted");
@@ -383,7 +394,12 @@ namespace WADH
                     webView.NavigationCompleted -= WebView_NavigationCompleted;
                     webView.CoreWebView2.DownloadStarting -= CoreWebView2_DownloadStarting;
 
-                    OnDownloadAddonsAsyncCompleted(cancellationRequested, null);
+                    debugWriter.PrintInfo(cancellationRequested ?
+                        "Queue of urls is not empty yet, but cancellation occurred. --> !!! Stop and not proceed with next url !!!" :
+                        "Queue of urls is empty, there is nothing else to download. --> !!! All addons successfully downloaded !!!");
+                    OnDownloadAddonsAsyncCompleted(cancellationRequested);
+
+                    isRunning = false;
 
                     return;
                 }
@@ -391,7 +407,17 @@ namespace WADH
                 // Still some addons to download in queue and no cancellation occurred, so proceed with next url.
 
                 var next = addonUrls.Dequeue();
+
                 debugWriter.PrintInfo($"Queue of urls is not empty yet, so proceed with next url in queue. --> {next}");
+                OnDownloadAddonsAsyncProgressChanged(
+                    WebViewHelperProgressState.AddonFinished,
+                    url,
+                    $"Addon finished. Proceeding with next addon ('{curseHelper.GetAddonNameFromAddonUrl(next)}').",
+                    addon,
+                    file,
+                    received,
+                    total);
+
                 webView.Source = new Uri(next);
             }
         }
@@ -401,24 +427,25 @@ namespace WADH
             string url,
             string info = "",
             string addon = "",
+            string file = "",
             ulong received = default,
             ulong total = default)
         {
             DownloadAddonsAsyncProgressChanged?.Invoke(
                 this,
-                new ProgressChangedEventArgs(
-                    CalcPercent(),
-                    new WebViewHelperProgress(state, url, info, addon, received, total)));
+                new ProgressChangedEventArgs(CalcPercent(), new WebViewHelperProgress(state, url, info, addon, file, received, total)));
         }
 
-        private void OnDownloadAddonsAsyncCompleted(bool cancelled = default, Exception? error = default)
+        private void OnDownloadAddonsAsyncCompleted(bool cancelled = default, string error = "")
         {
-            DownloadAddonsAsyncCompleted?.Invoke(this, new AsyncCompletedEventArgs(error, cancelled, null));
+            DownloadAddonsAsyncCompleted?.Invoke(
+                this,
+                new AsyncCompletedEventArgs(error != "" ? new InvalidOperationException(error) : null, cancelled, $"Completed {finishedDownloads}/{addonCount} addons."));
         }
 
         private int CalcPercent()
         {
-            // Do casts inside try/catch block, just to be sure.
+            // Doing casts inside try/catch block, just to be sure.
 
             try
             {
