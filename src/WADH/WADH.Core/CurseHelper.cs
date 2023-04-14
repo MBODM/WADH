@@ -1,4 +1,6 @@
-﻿namespace WADH.Core
+﻿using System.Reflection.Metadata;
+
+namespace WADH.Core
 {
     public sealed class CurseHelper : ICurseHelper
     {
@@ -66,12 +68,16 @@
             // The app disables the JS engine, before loading the addon page, to prevent the 5 sec timer (JS) from running.
             // With disabled JS some noscript tags become active and all relevant information is no longer visible at top.
             // Therefore removing the empty img and the "JS is disabled" message, so all relevant stuff moves to top again.
+            // And since WebView2 offers no property to hide scrollbars, the last line here does this, as some final step.
 
             return
-                "let img = document.querySelector('body img');" +
-                "if (img) { img.remove(); }" +
-                "let noscripts = document.querySelectorAll('body noscript');" +
-                "if (noscripts.length >= 2) noscripts[1].remove();";
+            "let img = document.querySelector('body img');" +
+            "if (img) { img.style.visibility = 'hidden'; img.style.height = '0px'; }" +
+            "let noscripts = document.querySelectorAll('body noscript');" +
+            "if (noscripts && noscripts.length >= 2) { noscripts[1].style.visibility = 'hidden'; noscripts[1].style.height = '0px';}" +
+            "let containers = document.querySelectorAll('body div.container');" +
+            "if (containers && containers.length >= 3) { containers[3].style.visibility = 'hidden'; containers[3].style.height = '50px';}" +
+            "document.body.style.overflow = 'hidden'";
         }
 
         private static string GetGrabRedirectDownloadUrlScript()

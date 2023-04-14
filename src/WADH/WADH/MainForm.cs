@@ -29,9 +29,8 @@ namespace WADH
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
             Size = new Size(1280, 800); // 16:10 format.
-            panelWebView.Enabled = false; // Prevents user from clicking the web site.
+            //panelWebView.Enabled = false; // Prevents user from clicking the web site.
             labelWauz.Visible = false;
-
             Enabled = false;
         }
 
@@ -63,7 +62,7 @@ namespace WADH
             if (buttonStart.Text == "Cancel")
             {
                 buttonStart.Enabled = false; // Prevents button/logic jitter (button will become active again in EAP Completed event).
-                webViewHelper.CancelDownloadAddonsAsync(); 
+                webViewHelper.CancelDownloadAddonsAsync();
 
                 return;
             }
@@ -135,42 +134,56 @@ namespace WADH
         {
             if (e.UserState is WebViewHelperProgress progress)
             {
-                if (progress.State == WebViewHelperProgressState.AddonStarting)
+                switch (progress.State)
                 {
-                    buttonStart.Enabled = true; // Prevents button/logic jitter.
-                    labelStatus.Text = $"Processing {progress.Addon}";
-                }
-
-                if (progress.State == WebViewHelperProgressState.AddonFinished)
-                {
-                    progressBar.Value = e.ProgressPercentage;
-                }
-
-                if (progress.State == WebViewHelperProgressState.DownloadProgress)
-                {
-                    labelStatus.Text = $"Downloading {progress.Addon}";
-
-                    // This is not necessary here, since this event/state combination happens for large addons only.
-                    // But relying on some implementation is evil, so it is better to make sure it is a large addon.
-
-                    ulong oneMegaByte = 1024 * 1024;
-
-                    if (progress.Total > oneMegaByte)
-                    {
-                        var received = (double)(progress.Received / 1024) / 1024;
-                        var total = (double)(progress.Total / 1024) / 1024;
-
-                        labelStatus.Text += $" ({received:0.##} MB / {total:0.##} MB)";
-                    }
+                    case WebViewHelperProgressState.AddonStarting:
+                        buttonStart.Enabled = true; // Prevents button/logic jitter (button was set inactive on "Start" click).
+                        labelStatus.Text = $"Processing {progress.Addon}";
+                        break;
+                    case WebViewHelperProgressState.CurseAddonSiteLoaded:
+                        // State not used at the moment.
+                        break;
+                    case WebViewHelperProgressState.CursePreludeProgress:
+                        // State not used at the moment.
+                        break;
+                    case WebViewHelperProgressState.CursePreludeFinished:
+                        // State not used at the moment.
+                        break;
+                    case WebViewHelperProgressState.DownloadStarting:
+                        // State not used at the moment.
+                        break;
+                    case WebViewHelperProgressState.DownloadProgress:
+                        // This may not necessary here, since this event/state combination happens for large addons only.
+                        // But just relying on some implementation is a bad move, so better make sure it is a large addon.
+                        if (progress.Total > 1024 * 1024) // 1024 * 1024 = 1 MB
+                        {
+                            labelStatus.Text = $"Downloading {progress.Addon}";
+                            var received = (double)(progress.Received / 1024) / 1024;
+                            var total = (double)(progress.Total / 1024) / 1024;
+                            labelStatus.Text += $" ({received:0.##} MB / {total:0.##} MB)".Replace(',', '.');
+                        }
+                        break;
+                    case WebViewHelperProgressState.DownloadFinished:
+                        // State not used at the moment.
+                        break;
+                    case WebViewHelperProgressState.AddonFinished:
+                        progressBar.Value = e.ProgressPercentage;
+                        break;
+                    default:
+                        throw new InvalidOperationException("WebViewHelperProgressState value not supported.");
                 }
             }
         }
 
-        private void WebViewHelper_DownloadAddonsAsyncCompleted(object? sender, AsyncCompletedEventArgs e)
+        private async void WebViewHelper_DownloadAddonsAsyncCompleted(object? sender, AsyncCompletedEventArgs e)
         {
-            buttonStart.Text = "Start";
-            buttonStart.Enabled = true;
-            buttonClose.Enabled = true;
+            // Even with a typical semaphore-blocking-mechanism it is impossible to prevent a Windows.Forms
+            // ProgressBar control from reaching its maximum shortly after the last async progress happened.
+            // The control is painted natively by the WinApi/OS itself. Therefore also no event-based tricks
+            // will solve the problem. I just added a short async wait delay instead, to keep things simple.
+            // This means the ProgressBar now has X ms, to be painted by Windows, to reach the maximum first.
+
+            await Task.Delay(1250);
 
             if (e.Cancelled)
             {
@@ -184,6 +197,10 @@ namespace WADH
             {
                 labelStatus.Text = $"Download of {configReader.AddonUrls.Count()} addons successfully finished";
             }
+
+            buttonStart.Text = "Start";
+            buttonStart.Enabled = true;
+            buttonClose.Enabled = true;
         }
 
         private async Task InitDownloadFolder(string folder)

@@ -1,4 +1,7 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
+using System.Reflection.Metadata;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using WADH.Core;
@@ -13,9 +16,9 @@ namespace WADH
         private WebView2? webView = null;
         private bool isRunning = false;
         private bool cancellationRequested = false;
+        private int finishedDownloads = 0;
         private int addonCount = 0;
         private ulong navigationId = 0;
-        private int finishedDownloads = 0;
 
         private readonly Queue<string> addonUrls = new();
 
@@ -126,6 +129,7 @@ namespace WADH
 
             isRunning = true;
             cancellationRequested = false;
+            finishedDownloads = 0;
 
             this.addonUrls.Clear();
             addonUrls.ToList().ForEach(url => this.addonUrls.Enqueue(url));
@@ -134,6 +138,7 @@ namespace WADH
             webView.CoreWebView2.Profile.DefaultDownloadFolderPath = Path.GetFullPath(downloadFolder);
 
             webView.NavigationStarting += WebView_NavigationStarting;
+            webView.CoreWebView2.DOMContentLoaded += CoreWebView2_DOMContentLoaded;
             webView.NavigationCompleted += WebView_NavigationCompleted;
             webView.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
 
@@ -150,7 +155,148 @@ namespace WADH
             {
                 // Kick off the whole event chain process, by loading the first url.
 
+                webView.Visible = false;
                 webView.Source = new Uri(addonUrls.First());
+            }
+        }
+
+        private async void CoreWebView2_DOMContentLoaded(object? sender, CoreWebView2DOMContentLoadedEventArgs e)
+        {
+            if (webView != null)  // Enforced by NRT
+            {
+                //webView.Visible = false;
+                //webView.SuspendLayout();
+                //await webView.ExecuteScriptAsync("document.body.style.opacity = '0.00'");
+
+                //var s = "" +
+                //    "const spin = [{ transform: 'rotate(0) scale(1)' }, { transform: 'rotate(360deg) scale(0)' }];" +
+                //    "const time = { duration: 2000, iterations: 1, };";
+                //await webView.ExecuteScriptAsync("document.querySelector('body').animate(spin, time);");
+
+
+                /*
+                   var style = document.createElement('style');
+  style.innerHTML = `
+  #target {
+  color: blueviolet;
+  }
+  `;
+  document.head.appendChild(style);
+                 */
+
+
+                /*
+                #slideSource { opacity: 1; transition: opacity 1s; }
+
+#slideSource.fade { opacity: 0; }
+                */
+
+                //await webView.ExecuteScriptAsync("console.log('woop1');");
+
+                //var s =
+                //    "console.log('woop2');" +
+                //    "let style = document.createElement('style');" +
+                //    "style.innerHTML = 'body { color: red; background: blue; opacity: 0.25; transition: opacity 1s; } body.fade { opacity: 0.5; }';" +
+                //    "document.head.appendChild(style)";
+                //var res = await webView.ExecuteScriptAsync(s);
+
+                //webView.Visible = false;
+                //var s =
+                //    "console.log('woop2');" +
+                //    "let style = document.createElement('style');" +
+                //    "style.innerHTML = '@keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } } body { animation: fadeIn 1s; }';" +
+                //    "document.head.appendChild(style)";
+                //var res = await webView.ExecuteScriptAsync(s);
+                //webView.Visible = true;
+
+
+                //webView.Visible = false;
+                //var s =
+                //    "console.log('woop1');" +
+                //    "let style = document.createElement('style');" +
+                //    "style.innerHTML = 'body { opacity: 0; }';" +
+                //    "document.head.appendChild(style)" +
+                //    "console.log('woop2');";
+
+                if (curseHelper.IsAddonUrl(webView.Source.ToString()))
+                {
+                    //var s =
+                    //    "console.log('WebView2 DOMContentLoaded [start]');" +
+                    //    "let style = document.createElement('style');" +
+                    //    "style.innerHTML = 'body {\n  opacity: 0;\n  transition: opacity 1s;\n}\n\nbody.fade {\n  opacity: 1;\n}';" +
+                    //    //"style.innerHTML = 'body { opacity: 1; transition: opacity 500ms; ease-in-out; } body.fadeout { opacity: 0; }';" +
+                    //    "document.head.appendChild(style);" +
+                    //    "console.log('WebView2 DOMContentLoaded [end]');";
+                    //await webView.ExecuteScriptAsync(s);
+
+                    await webView.ExecuteScriptAsync(curseHelper.AdjustPageAppearanceScript);
+                    await webView.ExecuteScriptAsync("document.querySelector('body').style.opacity = '0';");
+                    await webView.ExecuteScriptAsync("document.querySelector('body').style.transition = 'opacity 2000ms';");
+                    webView.Visible = true;
+                    await webView.ExecuteScriptAsync("document.querySelector('body').style.opacity = '1';");
+                    
+
+
+
+
+
+                    ////var s =
+                    ////    "console.log('WebView2 DOMContentLoaded [start]');" +
+                    ////    "document.querySelector('body').style.opacity = '0';" +
+                    ////    "let style = document.createElement('style');" +
+                    ////    "style.innerHTML = '" +
+                    ////    "body.fadein { animation-name: fadein; animation-duration: 1000ms; animation-delay: 100ms; animation-fill-mode: forwards; } " +
+                    ////    "@keyframes fadein { 0% { opacity: 0; } 100% { opacity: 1; } } " +
+                    ////    "body.fadeout { animation-name: fadeout; animation-duration: 1000ms; animation-delay: 100ms; animation-fill-mode: forwards; } " +
+                    ////    "@keyframes fadeout { 0% { opacity: 1; } 100% { opacity: 0; } }" +
+                    ////    "';" +
+                    ////    "document.head.appendChild(style);" +
+                    ////    "console.log('WebView2 DOMContentLoaded [end]');";
+                    //await webView.ExecuteScriptAsync(s);
+                    //await webView.ExecuteScriptAsync(curseHelper.AdjustPageAppearanceScript);
+                    //await webView.ExecuteScriptAsync("document.querySelector('body').classList.add('fadein');");
+                    //webView.Visible = true;
+                    //await Task.Delay(1250);
+                    //await webView.ExecuteScriptAsync("document.querySelector('body').style.opacity = '1';");
+                    //await webView.ExecuteScriptAsync("document.querySelector('body').classList.remove('fadein');");
+                }
+
+
+
+
+
+                //Debug.WriteLine("####################################################");
+                //Debug.WriteLine(res);
+                //Debug.WriteLine("####################################################");
+
+
+
+
+
+                //await webView.ExecuteScriptAsync("document.getElementById('body').classList.add('classToBeAdded');");
+                //await webView.ExecuteScriptAsync("document.body.style.opacity = '0';");
+                //await webView.ExecuteScriptAsync("document.body.style.fade.transition = 'opacity 1s';");
+                //await webView.ExecuteScriptAsync("console.log('wazzu');");
+                //await webView.ExecuteScriptAsync("console.log(document.body.style);");
+                //await webView.ExecuteScriptAsync("document.body.style.fade.opacity = '1';");
+
+
+
+                //await Task.Delay(250);
+                //await webView.ExecuteScriptAsync("document.body.style.opacity = '0.25'");
+                //await Task.Delay(250);
+                //await webView.ExecuteScriptAsync("document.body.style.opacity = '0.50'");
+                //await Task.Delay(250);
+                //await webView.ExecuteScriptAsync("document.body.style.opacity = '0.75'");
+                //await Task.Delay(250);
+                //await webView.ExecuteScriptAsync("document.body.style.opacity = '1.00'");
+
+                //webView.ResumeLayout();
+                //webView.Update();
+
+
+
+                //webView.Visible = true;
             }
         }
 
@@ -179,7 +325,6 @@ namespace WADH
             {
                 debugWriter.PrintInfo("Valid url, navigation-id and redirect-state. -- > Proceed with navigation.");
                 var info = "Navigation continues, cause of valid url, navigation-id and redirect-state.";
-
                 if (curseHelper.IsAddonUrl(e.Uri))
                 {
                     OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.AddonStarting, e.Uri, info, curseHelper.GetAddonNameFromAddonUrl(e.Uri));
@@ -233,9 +378,69 @@ namespace WADH
                         debugWriter.PrintInfo("Navigation to Curse addon site successfully completed.");
                         debugWriter.PrintInfo("Execute script now, to fetch 'href' attribute from loaded Curse addon site ...");
 
-                        await webViewLocal.ExecuteScriptAsync(curseHelper.AdjustPageAppearanceScript);
-                        var href = await webViewLocal.ExecuteScriptAsync(curseHelper.GrabRedirectDownloadUrlScript);
+                        await Task.Delay(2000);
 
+                        //await webViewLocal.ExecuteScriptAsync("document.querySelector('body').classList.toggle('fade');");
+
+
+                        //var test =
+                        //    "console.log('body:');" +
+                        //    "console.log(document.querySelector('body').innerHTML);";
+                        //await webView.ExecuteScriptAsync(test);
+
+                        //webView.Visible = true;
+                        //var fadeInScript =
+                        //    "console.log('WebView2 NavigationCompleted event -> Fade in opacity to 1 [Start]');" +
+                        //    "let style = document.createElement('style');" +
+                        //    "style.innerHTML = 'body { animation-name: fadein; animation-duration: 750ms; animation-delay: 100ms; animation-fill-mode: forwards; } @keyframes fadein { 0% { opacity: 0; } 100% { opacity: 1; } }';" +
+                        //    "document.head.appendChild(style);" +
+                        //    "console.log('WebView2 NavigationCompleted event -> Fade in opacity to 1 [End]');";
+
+
+                        //var fadeInScript =
+                        //    "console.log('WebView2 NavigationCompleted [start]');" +
+                        //    //"document.querySelector('body').classList.toggle('fadein');" +
+                        //    //"document.querySelector('body').classList.toggle('fadein');" +
+                        //    "console.log('WebView2 NavigationCompleted [end]');";
+                        //await webView.ExecuteScriptAsync(fadeInScript);
+                        //await webView.ExecuteScriptAsync("document.querySelector('body').style.opacity = '1';");
+                        ////await Task.Delay(2000);
+                        
+                        //await webView.ExecuteScriptAsync("console.log('woop3'); document.querySelector('body').style.color = 'red'; console.log('woop4');");
+                        //webView.Visible = true;
+                        //await webView.ExecuteScriptAsync("console.log('woop5'); document.querySelector('body').animate({\"opacity\": \"1\"}, 1000); console.log('woop6');");
+                        
+
+
+                        
+
+
+                        //await webView.ExecuteScriptAsync("console.log('woop3'); document.querySelector('body').classList.add('fade'); console.log('woop4');");
+                        //await webView.ExecuteScriptAsync("console.log('woop3'); document.querySelector('body').classList.toggle('fade'); console.log('woop4');");
+
+                        /*
+                         #slideSource {
+  opacity: 1;
+  transition: opacity 1s; 
+}
+
+#slideSource.fade {
+  opacity: 0;
+}
+                         */
+
+                        //await webView.ExecuteScriptAsync("document.body.style.opacity = '0.5';");
+
+                        //await Task.Delay(50);
+                        //await webView.ExecuteScriptAsync("document.body.style.opacity = '0.25'");
+                        //await Task.Delay(50);
+                        //await webView.ExecuteScriptAsync("document.body.style.opacity = '0.50'");
+                        //await Task.Delay(50);
+                        //await webView.ExecuteScriptAsync("document.body.style.opacity = '0.75'");
+                        //await Task.Delay(50);
+
+
+                        var href = await webViewLocal.ExecuteScriptAsync(curseHelper.GrabRedirectDownloadUrlScript);
                         href = href.Trim().Trim('"');
                         debugWriter.PrintInfo($"Script returned href as string. --> {href}");
 
@@ -250,7 +455,7 @@ namespace WADH
 
                             // This is the central logic part of the "prevent the 5 sec JS timer" concept.
                             // By disabling JS, fetching the 'href' manually and loading that url manually.
-
+                            
                             webViewLocal.Stop();
                             webViewLocal.Source = new Uri(href);
 
@@ -345,7 +550,7 @@ namespace WADH
             }
         }
 
-        private void DownloadOperation_StateChanged(object? sender, object e)
+        private async void DownloadOperation_StateChanged(object? sender, object e)
         {
             debugWriter.PrintEventHeader();
 
@@ -366,18 +571,59 @@ namespace WADH
                 downloadOperation.BytesReceivedChanged -= DownloadOperation_BytesReceivedChanged;
                 downloadOperation.StateChanged -= DownloadOperation_StateChanged;
 
-                var url = downloadOperation.Uri;
-                var addon = curseHelper.GetAddonNameFromDownloadUrl(url);
-                var file = Path.GetFileName(downloadOperation.ResultFilePath);
-                var received = (ulong)downloadOperation.BytesReceived;
-                var total = downloadOperation.TotalBytesToReceive ?? 0;
-
                 if (downloadOperation.State == CoreWebView2DownloadState.Completed)
                 {
-                    finishedDownloads++;
+                    var url = downloadOperation.Uri;
+                    var addon = curseHelper.GetAddonNameFromDownloadUrl(url);
+                    var file = Path.GetFileName(downloadOperation.ResultFilePath);
+                    var received = (ulong)downloadOperation.BytesReceived;
+                    var total = downloadOperation.TotalBytesToReceive ?? 0;
 
                     debugWriter.PrintInfo($"Finished a file download --> {file}");
                     OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.DownloadFinished, url, "Finished file download.", addon, file, received, total);
+
+                    finishedDownloads++;
+
+                    OnDownloadAddonsAsyncProgressChanged(
+                        WebViewHelperProgressState.AddonFinished,
+                        url,
+                        $"Addon finished ({finishedDownloads}/{addonCount}).",
+                        addon,
+                        file,
+                        received,
+                        total);
+
+
+                    await webView.ExecuteScriptAsync("document.querySelector('body').style.opacity = '0';");
+                    await Task.Delay(2000);
+                    webView.Visible = false;
+                    //await webView.ExecuteScriptAsync("document.querySelector('body').style.opacity = '0';");
+                    
+
+
+                    //await webView.ExecuteScriptAsync("console.log('Download finished handler reached.');");
+                    //var fadeOutScript =
+                    //    "console.log('WebView2 StateChanged [start]');" +
+                    //    "document.querySelector('body').classList.toggle('fade');" +
+                    //    //"document.querySelector('body').classList.toggle('fadein');" +
+                    //    //"document.querySelector('body').classList.toggle('fadeout');" +
+                    //    "console.log('WebView2 StateChanged [end]');";
+                    //await webView.ExecuteScriptAsync(fadeOutScript);
+                    //await Task.Delay(3000);
+
+                    //await webView.ExecuteScriptAsync($"console.log('webView.Source = {webView.Source.ToString()}');");
+                    //var test =
+                    //    "console.log('body:');" +
+                    //    "console.log(document.querySelector('body').innerHTML);";
+                    //await webView.ExecuteScriptAsync(test);
+
+                    //var fadeOutScript =
+                    //    "console.log('fadeout-start');" +
+                    //    "let style = document.createElement('style');" +
+                    //    "style.innerHTML = 'body { animation-name: fadeout; animation-duration: 750ms; animation-delay: 100ms; animation-fill-mode: forwards; } @keyframes fadeout { 0% { opacity: 1; } 100% { opacity: 0; } }';" +
+                    //    "document.head.appendChild(style);" +
+                    //    "console.log('fadeout-end');";
+                    //await webView.ExecuteScriptAsync(fadeOutScript);
                 }
 
                 if (webView == null) return; // Enforced by NRT
@@ -399,25 +645,14 @@ namespace WADH
                         "Queue of urls is empty, there is nothing else to download. --> !!! All addons successfully downloaded !!!");
                     OnDownloadAddonsAsyncCompleted(cancellationRequested);
 
-                    isRunning = false;
-
                     return;
                 }
 
                 // Still some addons to download in queue and no cancellation occurred, so proceed with next url.
 
                 var next = addonUrls.Dequeue();
-
                 debugWriter.PrintInfo($"Queue of urls is not empty yet, so proceed with next url in queue. --> {next}");
-                OnDownloadAddonsAsyncProgressChanged(
-                    WebViewHelperProgressState.AddonFinished,
-                    url,
-                    $"Addon finished. Proceeding with next addon ('{curseHelper.GetAddonNameFromAddonUrl(next)}').",
-                    addon,
-                    file,
-                    received,
-                    total);
-
+                webView.Visible = false;
                 webView.Source = new Uri(next);
             }
         }
@@ -438,6 +673,8 @@ namespace WADH
 
         private void OnDownloadAddonsAsyncCompleted(bool cancelled = default, string error = "")
         {
+            isRunning = false;
+
             DownloadAddonsAsyncCompleted?.Invoke(
                 this,
                 new AsyncCompletedEventArgs(error != "" ? new InvalidOperationException(error) : null, cancelled, $"Completed {finishedDownloads}/{addonCount} addons."));
@@ -449,9 +686,11 @@ namespace WADH
 
             try
             {
-                var percent = (double)(100 / addonCount) * finishedDownloads;
+                var exact = (double)100 / addonCount * finishedDownloads;
+                var rounded = (int)Math.Round(exact);
+                var percent = rounded > 100 ? 100 : rounded; // Cap it, just to be sure.
 
-                return (int)percent;
+                return percent;
             }
             catch
             {
