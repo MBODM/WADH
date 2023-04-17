@@ -28,8 +28,8 @@ namespace WADH
 
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
-            Size = new Size(1280, 800); // 16:10 format.
-            //panelWebView.Enabled = false; // Prevents user from clicking the web site.
+            Size = new Size(1280, 800); // 16:10 format
+            panelWebView.Enabled = false; // Prevents user from clicking the web site
             labelWauz.Visible = false;
             Enabled = false;
         }
@@ -38,7 +38,7 @@ namespace WADH
         {
             await webViewHelper.InitAsync(webView);
 
-            var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me, since the BL knows the impl type anyway.
+            var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me (since the BL knows the impl type anyway)
             if (!string.IsNullOrEmpty(configFolder))
             {
                 labelConfig.ForeColor = new LinkLabel().LinkColor;
@@ -61,7 +61,7 @@ namespace WADH
         {
             if (buttonStart.Text == "Cancel")
             {
-                buttonStart.Enabled = false; // Prevents button/logic jitter (button will become active again in EAP Completed event).
+                buttonStart.Enabled = false; // Prevents Start button/logic jitter (Start button will become active again in EAP Completed event)
                 webViewHelper.CancelDownloadAddonsAsync();
 
                 return;
@@ -95,8 +95,7 @@ namespace WADH
                 await InitDownloadFolder(configReader.DownloadFolder);
 
                 buttonStart.Text = "Cancel";
-                buttonStart.Enabled = false; // Prevents button/logic jitter (button will become active again in EAP Progress event).
-                buttonClose.Enabled = false;
+                SetButtons(false); // Prevents Start button/logic jitter (Start button will become active again in EAP Progress event)
 
                 progressBar.Minimum = 0;
                 progressBar.Maximum = 100;
@@ -104,10 +103,6 @@ namespace WADH
 
                 webViewHelper.DownloadAddonsAsyncCompleted += WebViewHelper_DownloadAddonsAsyncCompleted;
                 webViewHelper.DownloadAddonsAsyncProgressChanged += WebViewHelper_DownloadAddonsAsyncProgressChanged;
-
-                //var tempForDebug = new List<string>() { configReader.AddonUrls.Where(url => url.Contains("/raiderio/")).First() };
-                //tempForDebug.Clear();
-                //tempForDebug.Add("attps://www.curseforge.com/wow/addons/coordinates/downloadz");
 
                 try
                 {
@@ -119,8 +114,7 @@ namespace WADH
                     ShowError("Error while starting download (see log file for details).");
 
                     buttonStart.Text = "Start";
-                    buttonStart.Enabled = true;
-                    buttonClose.Enabled = true;
+                    SetButtons(true);
                 }
             }
         }
@@ -137,34 +131,34 @@ namespace WADH
                 switch (progress.State)
                 {
                     case WebViewHelperProgressState.AddonStarting:
-                        buttonStart.Enabled = true; // Prevents button/logic jitter (button was set inactive on "Start" click).
-                        labelStatus.Text = $"Processing {progress.Addon}";
+                        buttonStart.Enabled = true; // Prevents Start button/logic jitter (Start button was set inactive on "Start" click)
+                        labelStatus.Text = $"Processing \"{progress.Addon}\"";
                         break;
                     case WebViewHelperProgressState.CurseAddonSiteLoaded:
-                        // State not used at the moment.
+                        // State not used at the moment
                         break;
                     case WebViewHelperProgressState.CursePreludeProgress:
-                        // State not used at the moment.
+                        // State not used at the moment
                         break;
                     case WebViewHelperProgressState.CursePreludeFinished:
-                        // State not used at the moment.
+                        // State not used at the moment
                         break;
                     case WebViewHelperProgressState.DownloadStarting:
-                        // State not used at the moment.
+                        // State not used at the moment
                         break;
                     case WebViewHelperProgressState.DownloadProgress:
                         // This may not necessary here, since this event/state combination happens for large addons only.
                         // But just relying on some implementation is a bad move, so better make sure it is a large addon.
                         if (progress.Total > 1024 * 1024) // 1024 * 1024 = 1 MB
                         {
-                            labelStatus.Text = $"Downloading {progress.Addon}";
+                            labelStatus.Text = $"Downloading \"{progress.Addon}\"";
                             var received = (double)(progress.Received / 1024) / 1024;
                             var total = (double)(progress.Total / 1024) / 1024;
-                            labelStatus.Text += $" ({received:0.##} MB / {total:0.##} MB)".Replace(',', '.');
+                            labelStatus.Text += $" ({received:0.00} MB / {total:0.00} MB)".Replace(',', '.');
                         }
                         break;
                     case WebViewHelperProgressState.DownloadFinished:
-                        // State not used at the moment.
+                        // State not used at the moment
                         break;
                     case WebViewHelperProgressState.AddonFinished:
                         progressBar.Value = e.ProgressPercentage;
@@ -192,6 +186,7 @@ namespace WADH
             else if (e.Error != null)
             {
                 labelStatus.Text = $"Error: {e.Error.Message}";
+                errorLogger.Log(e.Error);
             }
             else
             {
@@ -199,8 +194,7 @@ namespace WADH
             }
 
             buttonStart.Text = "Start";
-            buttonStart.Enabled = true;
-            buttonClose.Enabled = true;
+            SetButtons(true);
         }
 
         private async Task InitDownloadFolder(string folder)
@@ -215,6 +209,14 @@ namespace WADH
             {
                 Directory.CreateDirectory(folder);
             }
+        }
+
+        private void SetButtons(bool enabled)
+        {
+            labelWauz.Enabled = enabled;
+            labelConfig.Enabled = enabled;
+            buttonStart.Enabled = enabled;
+            buttonClose.Enabled = enabled;
         }
 
         private static string GetVersion()

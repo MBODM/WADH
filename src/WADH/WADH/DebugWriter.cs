@@ -34,6 +34,12 @@ namespace WADH
             PrintValue("e.IsRedirected", e.IsRedirected);
         }
 
+        public void PrintEventDOMContentLoaded(CoreWebView2DOMContentLoadedEventArgs e, string url)
+        {
+            PrintValue("sender.Source", url);
+            PrintValue("e.NavigationId", e.NavigationId);
+        }
+
         public void PrintEventNavigationCompleted(CoreWebView2NavigationCompletedEventArgs e, string url)
         {
             PrintValue("sender.Source", url);
