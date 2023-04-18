@@ -13,13 +13,14 @@ namespace WADH
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+            var errorLogger = new ErrorLogger();
             Application.Run(
                 new MainForm(
                     new ExternalToolsHelper(),
                     new ConfigReader(),
-                    new ErrorLogger(),
+                    errorLogger,
                     new FileSystemHelper(),
-                    new WebViewHelper(new DebugWriter(), new CurseHelper())));
+                    new WebViewHelper(new DebugWriter(), new CurseHelper(), errorLogger)));
         }
     }
 }

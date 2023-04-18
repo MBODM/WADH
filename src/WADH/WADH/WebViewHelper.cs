@@ -21,11 +21,13 @@ namespace WADH
 
         private readonly IDebugWriter debugWriter;
         private readonly ICurseHelper curseHelper;
+        private readonly IErrorLogger errorLogger;
 
-        public WebViewHelper(IDebugWriter debugWriter, ICurseHelper curseHelper)
+        public WebViewHelper(IDebugWriter debugWriter, ICurseHelper curseHelper, IErrorLogger errorLogger)
         {
             this.debugWriter = debugWriter ?? throw new ArgumentNullException(nameof(debugWriter));
             this.curseHelper = curseHelper ?? throw new ArgumentNullException(nameof(curseHelper));
+            this.errorLogger = errorLogger ?? throw new ArgumentNullException(nameof(errorLogger));
         }
 
         public event AsyncCompletedEventHandler? DownloadAddonsAsyncCompleted;
@@ -205,9 +207,9 @@ namespace WADH
             }
 
             debugWriter.PrintInfo("Invalid url, navigation-id or redirect-state. --> Cancel navigation now.");
-            OnDownloadAddonsAsyncCompleted(false, "Navigation cancels, cause of invalid url, navigation-id or redirect-state.");
-
-            e.Cancel = true; // Todo: Do we need webView.Stop() here, when e.Cancel = true ???
+            errorLogger.Log($"Error in NavigationStarting event occurred, cause of invalid url, navigation-id or redirect-state (url -> {e.Uri}).");
+            OnDownloadAddonsAsyncCompleted(false, "Navigation cancels, cause of unexpected Curse behaviour (see log for details).");
+            e.Cancel = true; // Todo: Do we need webViewLocal.Stop() here nonetheless ?
         }
 
         private async void CoreWebView2_DOMContentLoaded(object? sender, CoreWebView2DOMContentLoadedEventArgs e)
@@ -263,22 +265,29 @@ namespace WADH
                         href = href.Trim().Trim('"');
                         debugWriter.PrintInfo($"Script returned href as string. --> {href}");
 
-                        if (curseHelper.IsRedirect1Url(href))
+                        if (href == "null")
                         {
-                            debugWriter.PrintInfo("That returned string is a valid Curse-Redirect1-Url. --> Manually navigate to that url now ...");
-                            OnDownloadAddonsAsyncProgressChanged(
-                                WebViewHelperProgressState.CurseAddonSiteLoaded,
-                                url,
-                                $"Fetched href ('{href}') from Curse addon site.",
-                                curseHelper.GetAddonNameFromAddonUrl(url));
+                            errorLogger.Log($"Error in NavigationCompleted event: Fetched href value is null.");
+                        }
+                        else
+                        {
+                            if (curseHelper.IsRedirect1Url(href))
+                            {
+                                debugWriter.PrintInfo("That returned string is a valid Curse-Redirect1-Url. --> Manually navigate to that url now ...");
+                                OnDownloadAddonsAsyncProgressChanged(
+                                    WebViewHelperProgressState.CurseAddonSiteLoaded,
+                                    url,
+                                    $"Fetched href ('{href}') from Curse addon site.",
+                                    curseHelper.GetAddonNameFromAddonUrl(url));
 
-                            // This is the central logic part of the "prevent the 5 sec JS timer" concept.
-                            // By disabling JS, fetching the 'href' manually and loading that url manually.
+                                // This is the central logic part of the "prevent the 5 sec JS timer" concept.
+                                // By disabling JS, fetching the 'href' manually and loading that url manually.
 
-                            webView.Stop(); // Just to make sure
-                            webViewLocal.Source = new Uri(href);
+                                webViewLocal.Stop(); // Just to make sure
+                                webViewLocal.Source = new Uri(href);
 
-                            return;
+                                return;
+                            }
                         }
                     }
 
@@ -300,9 +309,10 @@ namespace WADH
                     }
 
                     // Error
-                    debugWriter.PrintInfo("Invalid url, navigation-id or status-codes. --> Stop navigation now.");
+                    debugWriter.PrintInfo("Invalid href, url, navigation-id or status-codes. --> Stop navigation now.");
+                    errorLogger.Log($"Error in NavigationCompleted event occurred, cause of invalid href, url, navigation-id or status-codes (url -> {url}).");
                     webViewLocal.Stop();
-                    OnDownloadAddonsAsyncCompleted(false, "Navigation stopped, cause of invalid url, navigation-id or status-codes.");
+                    OnDownloadAddonsAsyncCompleted(false, "Navigation stopped, cause of unexpected Curse behaviour (see log for details).");
                 }
             }
         }

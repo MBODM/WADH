@@ -29,16 +29,16 @@ namespace WADH.Core
                 throw new ArgumentNullException(nameof(exception));
             }
 
+            var message = $"Exception-Type: {exception.GetType().Name}{newLine}" + $"Exception-Message: {exception.Message}";
+
+            if (!string.IsNullOrEmpty(exception.StackTrace))
+            {
+                message += $"{newLine}Exception-StackTrace: {exception.StackTrace}";
+            }
+
             lock (syncRoot)
             {
-                WriteLogEntry(
-                    "Exception",
-                    file,
-                    line,
-                    $"Exception-Type: {exception.GetType().Name}{newLine}" +
-                    $"Exception-Message: {exception.Message}{newLine}" +
-                    $"Exception-StackTrace:{newLine}" +
-                    $"{exception.StackTrace}");
+                WriteLogEntry("Exception", file, line, message);
             }
         }
 

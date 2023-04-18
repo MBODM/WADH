@@ -76,7 +76,7 @@ namespace WADH
                 catch (Exception ex)
                 {
                     errorLogger.Log(ex);
-                    ShowError("Error while loading config file (see log file for details).");
+                    ShowError("Error while loading config file (see log for details).");
 
                     return;
                 }
@@ -111,7 +111,7 @@ namespace WADH
                 catch (Exception ex)
                 {
                     errorLogger.Log(ex);
-                    ShowError("Error while starting download (see log file for details).");
+                    ShowError("Error while starting download (see log for details).");
 
                     buttonStart.Text = "Start";
                     SetButtons(true);
