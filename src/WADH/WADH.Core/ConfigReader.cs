@@ -6,6 +6,13 @@ namespace WADH.Core
     {
         private readonly string xmlFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MBODM", "WADH.xml");
 
+        private readonly ICurseHelper curseHelper;
+
+        public ConfigReader(ICurseHelper curseHelper)
+        {
+            this.curseHelper = curseHelper ?? throw new ArgumentNullException(nameof(curseHelper));
+        }
+
         public string Storage => xmlFile;
 
         public string DownloadFolder { get; private set; } = string.Empty;
@@ -51,9 +58,9 @@ namespace WADH.Core
             }
         }
 
-        private static bool IsValidCurseUrl(string url)
+        private bool IsValidCurseUrl(string url)
         {
-            return url.StartsWith("https://www.curseforge.com/wow/addons/") && url.EndsWith("/download");
+            return curseHelper.IsAddonUrl(url);
         }
     }
 }

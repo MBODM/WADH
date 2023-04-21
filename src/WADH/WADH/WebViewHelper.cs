@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using WADH.Core;
@@ -57,10 +58,6 @@ namespace WADH
             // the EnsureCoreWebView2Async() method ends. Therefore just awaiting that method is all we need here.
 
             await webView.EnsureCoreWebView2Async(env);
-
-            // Completely disable JS execution, cause of our "prevent the Curse 5 sec JS timer" concept.
-
-            webView.CoreWebView2.Settings.IsScriptEnabled = false;
 
             isInitialized = true;
         }
@@ -135,8 +132,10 @@ namespace WADH
             addonCount = addonUrls.Count();
 
             webView.CoreWebView2.Profile.DefaultDownloadFolderPath = Path.GetFullPath(downloadFolder);
+            webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
 
             webView.NavigationStarting += WebView_NavigationStarting;
+            //webView.CoreWebView2.WebResourceRequested += CoreWebView2_WebResourceRequested;
             webView.CoreWebView2.DOMContentLoaded += CoreWebView2_DOMContentLoaded;
             webView.NavigationCompleted += WebView_NavigationCompleted;
             webView.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
@@ -175,54 +174,132 @@ namespace WADH
             debugWriter.PrintEventHeader();
             debugWriter.PrintEventNavigationStarting(e);
 
-            // JS is disabled (cause of the Curse 5 sec timer), to navigate to the parsed href manually.
-            // Therefore the 1st request, after the Curse addon site url, is not a redirect any longer.
-
-            if ((curseHelper.IsAddonUrl(e.Uri) && !e.IsRedirected) ||
-                (curseHelper.IsRedirect1Url(e.Uri) && !e.IsRedirected && e.NavigationId != navigationId) ||
-                (curseHelper.IsRedirect2Url(e.Uri) && e.IsRedirected && e.NavigationId == navigationId) ||
-                (curseHelper.IsDownloadUrl(e.Uri) && e.IsRedirected && e.NavigationId == navigationId))
+            if (sender is WebView2 webViewLocal)
             {
-                debugWriter.PrintInfo("Valid url, navigation-id and redirect-state. -- > Proceed with navigation.");
-
-                var info = "Navigation continues, cause of valid url, navigation-id and redirect-state.";
-
-                if (curseHelper.IsAddonUrl(e.Uri))
+                // Success #1 (addon page)
+                if (curseHelper.IsAddonUrl(e.Uri) && !e.IsRedirected && e.NavigationId != navigationId)
                 {
-                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.AddonStarting, e.Uri, info, curseHelper.GetAddonNameFromAddonUrl(e.Uri));
+                    webViewLocal.Visible = false; // Prevent addon page scrollbar flickering effects
+                    OnDownloadAddonsAsyncProgressChanged(
+                        WebViewHelperProgressState.AddonStarting,
+                        e.Uri,
+                        $"Starting addon processing ({finishedDownloads + 1}/{addonCount}).",
+                        curseHelper.GetAddonNameFromAddonUrl(e.Uri));
 
-                    if (sender is WebView2 webViewLocal)
-                    {
-                        webViewLocal.Visible = false; // Prevent "AdjustPageAppearanceScript" flickering effects
-                    }
-                }
-                else
-                {
-                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.CursePreludeProgress, e.Uri, info);
+                    debugWriter.PrintInfo("NavigationStarting #1 successful (CurseAddonUrl).");
+                    navigationId = e.NavigationId;
+                    return;
                 }
 
-                navigationId = e.NavigationId;
+                // Success #2 (fetched download url)
+                if (curseHelper.IsFetchedDownloadUrl(e.Uri) && !e.IsRedirected && e.NavigationId != navigationId)
+                {
+                    debugWriter.PrintInfo("NavigationStarting #2 successful (CurseFetchedDownloadUrl).");
+                    navigationId = e.NavigationId;
+                    return;
+                }
 
-                return;
+                // Success #3 (redirect with api key)
+                if (curseHelper.IsRedirectUrlWithApiKey(e.Uri) && e.IsRedirected && e.NavigationId == navigationId)
+                {
+                    debugWriter.PrintInfo("NavigationStarting #3 successful (CurseRedirectApiKeyUrl).");
+                    navigationId = e.NavigationId;
+                    return;
+                }
+
+                // Success #4 (redirect to real download url)
+                if (curseHelper.IsRealDownloadUrl(e.Uri) && e.IsRedirected && e.NavigationId == navigationId)
+                {
+                    OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.RedirectsFinished, e.Uri, "Redirects successfully finished.");
+                    debugWriter.PrintInfo("NavigationStarting #4 successful (CurseRealDownloadUrl). --> Download should start soon...");
+                    navigationId = e.NavigationId;
+                    return;
+                }
+
+                // Error
+                debugWriter.PrintInfo("Unexpected Curse behaviour. --> Cancel navigation now.");
+                errorLogger.Log(new List<string>
+                {
+                    "Error in NavigationStarting event occurred, cause of unexpected Curse behaviour.",
+                    $"e.{nameof(e.IsRedirected)} = {e.IsRedirected}",
+                    $"e.{nameof(e.IsUserInitiated)} = {e.IsUserInitiated}",
+                    $"e.{nameof(e.NavigationId)} = {e.NavigationId}",
+                    $"e.{nameof(e.Uri)} = {e.Uri}",
+                });
+                OnDownloadAddonsAsyncCompleted(false, "Navigation cancels, cause of unexpected Curse behaviour (see log for details).");
+                e.Cancel = true; // Todo: Do we need webViewLocal.Stop() here nonetheless ?
             }
+        }
 
-            debugWriter.PrintInfo("Invalid url, navigation-id or redirect-state. --> Cancel navigation now.");
-            errorLogger.Log($"Error in NavigationStarting event occurred, cause of invalid url, navigation-id or redirect-state (url -> {e.Uri}).");
-            OnDownloadAddonsAsyncCompleted(false, "Navigation cancels, cause of unexpected Curse behaviour (see log for details).");
-            e.Cancel = true; // Todo: Do we need webViewLocal.Stop() here nonetheless ?
+        //// JS is disabled (cause of the Curse 5 sec timer), to navigate to the parsed href manually.
+        //// Therefore the 1st request, after the Curse addon site url, is not a redirect any longer.
+
+        //if ((curseHelper.IsAddonUrl(e.Uri) && !e.IsRedirected) ||
+        //    (curseHelper.IsValidDownloadStartingUrl(e.Uri) && !e.IsRedirected) ||
+        //    (curseHelper.IsRedirect2Url(e.Uri) && e.IsRedirected && e.NavigationId == navigationId) ||
+        //    (curseHelper.IsDownloadUrl(e.Uri) && e.IsRedirected && e.NavigationId == navigationId))
+        //{
+        //    debugWriter.PrintInfo("Valid url, navigation-id and redirect-state. -- > Proceed with navigation.");
+
+        //    var info = "Navigation continues, cause of valid url, navigation-id and redirect-state.";
+
+        //    if (curseHelper.IsAddonUrl(e.Uri))
+        //    {
+        //        OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.AddonStarting, e.Uri, info, curseHelper.GetAddonNameFromAddonUrl(e.Uri));
+
+        //        if (sender is WebView2 webViewLocal)
+        //        {
+        //            webViewLocal.Visible = false; // Prevent "AdjustPageAppearanceScript" flickering effects
+        //        }
+        //    }
+        //    else
+        //    {
+        //        OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.CursePreludeProgress, e.Uri, info);
+        //    }
+
+
+
+        //    return;
+        //}
+
+        //debugWriter.PrintInfo("Invalid url, navigation-id or redirect-state. --> Cancel navigation now.");
+        //errorLogger.Log($"Error in NavigationStarting event occurred, cause of invalid url, navigation-id or redirect-state (url -> {e.Uri}).");
+        //OnDownloadAddonsAsyncCompleted(false, "Navigation cancels, cause of unexpected Curse behaviour (see log for details).");
+        //e.Cancel = true; // Todo: Do we need webViewLocal.Stop() here nonetheless ?
+
+        private void CoreWebView2_WebResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
+        {
+            if (sender is WebView2 webViewLocal)
+            {
+                if (e.ResourceContext == CoreWebView2WebResourceContext.Script && e.Request.Uri.EndsWith("cookiebar.js"))
+                {
+                    // debugWriter.PrintEventHeader();
+                    // debugWriter.PrintInfo("cookie");
+                    
+                    // e.Response = webViewLocal.CoreWebView2.Environment.CreateWebResourceResponse(null, 404, "NotFound", null);
+                }
+            }
         }
 
         private async void CoreWebView2_DOMContentLoaded(object? sender, CoreWebView2DOMContentLoadedEventArgs e)
         {
             debugWriter.PrintEventHeader();
 
-            if (webView != null)  // Enforced by NRT
+            if (webView != null)  // Enforced by NRT and sender is CoreWebView2
             {
                 debugWriter.PrintEventDOMContentLoaded(e, webView.Source.ToString());
 
-                debugWriter.PrintInfo("Execute script now, to adjust page appearance ...");
-                await webView.ExecuteScriptAsync(curseHelper.AdjustPageAppearanceScript);
-                debugWriter.PrintInfo("Script finished.");
+                //debugWriter.PrintInfo("Execute script now, to adjust page appearance ...");
+                //await webView.ExecuteScriptAsync(curseHelper.AdjustPageAppearanceScript);
+                //debugWriter.PrintInfo("Script finished.");
+
+                //await webView.ExecuteScriptAsync("console.log('bin im dom content loaded event');");
+                //await webView.ExecuteScriptAsync("console.log(document.querySelector('body'));");
+                //await webView.ExecuteScriptAsync("console.log(document.querySelector('#cookiebar'));");
+
+
+                await webView.ExecuteScriptAsync("document.body.style.overflow = 'hidden';");
+                await webView.ExecuteScriptAsync("document.body.style.overflow = 'hidden';");
 
                 webView.Visible = true; // Prevent "AdjustPageAppearanceScript" flickering effects
             }
@@ -251,19 +328,38 @@ namespace WADH
                     // And since there exists no easy way to get the actual redirect location url,
                     // it is not possible to get the url for the last/2nd occurrence of this event.
 
-                    // Success #1 (addon site loaded)
+                    // Success #1 (addon page)
                     if (curseHelper.IsAddonUrl(url) &&
                         e.NavigationId == navigationId &&
                         e.IsSuccess &&
                         e.HttpStatusCode == 200 &&
                         e.WebErrorStatus == CoreWebView2WebErrorStatus.Unknown)
                     {
-                        debugWriter.PrintInfo("Navigation to Curse addon site successfully completed.");
+                        debugWriter.PrintInfo("NavigationCompleted #1 (addon page) successful.");
+
+                        //await webViewLocal.ExecuteScriptAsync("console.log('bin da');");
+                        //await webViewLocal.ExecuteScriptAsync("console.log(document.querySelector('#cookiebar'));");
+                        //await webViewLocal.ExecuteScriptAsync("let cookiebar = document.querySelector('#cookiebar'); if (cookiebar) { cookiebar.style.visibility = 'hidden'; }");
+
+
+
+                        //await webViewLocal.ExecuteScriptAsync("console.log('bin im completed event');");
+                        //await webViewLocal.ExecuteScriptAsync("console.log(document.querySelector('body'));");
+                        //await webViewLocal.ExecuteScriptAsync("console.log(document.querySelector('#cookiebar'));");
+                        await webViewLocal.ExecuteScriptAsync("document.querySelector('#cookiebar').style.visibility = 'hidden';");
+                        
+
                         debugWriter.PrintInfo("Execute script now, to fetch 'href' attribute from loaded Curse addon site ...");
 
-                        var href = await webViewLocal.ExecuteScriptAsync(curseHelper.GrabRedirectDownloadUrlScript);
+                        var json = await webViewLocal.ExecuteScriptAsync(curseHelper.GrabJsonFromAddonPageScript);
+                        json = json.Trim().Trim('"').Trim();
+                        json = Regex.Unescape(json);
+                        var model = curseHelper.SerializeAddonPageJson(json);
+                        var href = curseHelper.BuildDownloadUrl(model.Id, model.FileId);
                         href = href.Trim().Trim('"');
                         debugWriter.PrintInfo($"Script returned href as string. --> {href}");
+
+
 
                         if (href == "null")
                         {
@@ -271,7 +367,7 @@ namespace WADH
                         }
                         else
                         {
-                            if (curseHelper.IsRedirect1Url(href))
+                            //if (curseHelper.IsRedirect1Url(href))
                             {
                                 debugWriter.PrintInfo("That returned string is a valid Curse-Redirect1-Url. --> Manually navigate to that url now ...");
                                 OnDownloadAddonsAsyncProgressChanged(
@@ -291,16 +387,18 @@ namespace WADH
                         }
                     }
 
-                    // Success #2 (redirects/Cloudflare finished)
-                    if (curseHelper.IsRedirect1Url(url) &&
+                    return;
+
+                    // Success #2 (last redirect)
+                    if (curseHelper.IsFetchedDownloadUrl(url) &&
                         e.NavigationId == navigationId &&
                         !e.IsSuccess &&
                         e.HttpStatusCode == 0 &&
-                        e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted)
+                        e.WebErrorStatus == CoreWebView2WebErrorStatus.OperationCanceled)
                     {
-                        debugWriter.PrintInfo("Redirects/Cloudflare processing successfully finished. -- > Download should start now ...");
+                        debugWriter.PrintInfo("NavigationCompleted #2 (last redirect) successful. -- > Download should start now...");
                         OnDownloadAddonsAsyncProgressChanged(
-                            WebViewHelperProgressState.CursePreludeFinished,
+                            WebViewHelperProgressState.RedirectsFinished,
                             "There is no easy way to show the real (redirected) url here.",
                             "Curse prelude finished. Download should start now.",
                             curseHelper.GetAddonNameFromRedirect1Url(url));
@@ -419,7 +517,7 @@ namespace WADH
                     OnDownloadAddonsAsyncProgressChanged(
                         WebViewHelperProgressState.AddonFinished,
                         url,
-                        $"Addon finished ({finishedDownloads}/{addonCount}).",
+                        $"Finished addon processing ({finishedDownloads}/{addonCount}).",
                         addon,
                         file,
                         received,
@@ -434,6 +532,7 @@ namespace WADH
 
                     debugWriter.PrintInfo("Unregister event handler --> NavigationStarting");
                     debugWriter.PrintInfo("Unregister event handler --> CoreWebView2.DOMContentLoaded");
+                    debugWriter.PrintInfo("Unregister event handler --> CoreWebView2.WebResourceRequested");
                     debugWriter.PrintInfo("Unregister event handler --> NavigationCompleted");
                     debugWriter.PrintInfo("Unregister event handler --> CoreWebView2.DownloadStarting");
 

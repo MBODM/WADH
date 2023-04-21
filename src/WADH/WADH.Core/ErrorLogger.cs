@@ -22,6 +22,26 @@ namespace WADH.Core
             }
         }
 
+        public void Log(IEnumerable<string> multiLineMessage, [CallerFilePath] string file = "", [CallerLineNumber] int line = 0)
+        {
+            if (multiLineMessage is null)
+            {
+                throw new ArgumentNullException(nameof(multiLineMessage));
+            }
+
+            if (!multiLineMessage.Any())
+            {
+                throw new ArgumentNullException(nameof(multiLineMessage), "Enumerable is empty.");
+            }
+
+            var message = string.Join(newLine, multiLineMessage);
+
+            lock (syncRoot)
+            {
+                WriteLogEntry("Message", file, line, message);
+            }
+        }
+
         public void Log(Exception exception, [CallerFilePath] string file = "", [CallerLineNumber] int line = 0)
         {
             if (exception is null)

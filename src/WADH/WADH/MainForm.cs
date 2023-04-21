@@ -28,8 +28,8 @@ namespace WADH
 
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
-            Size = new Size(1280, 800); // 16:10 format
-            panelWebView.Enabled = false; // Prevents user from clicking the web site
+            Size = new Size(1280 / 100 * 110, 800 / 100 * 110); // 16:10 format (10% increased to fit addon page size)
+            //panelWebView.Enabled = false; // Prevents user from clicking the web site
             labelWauz.Visible = false;
             Enabled = false;
         }
@@ -134,13 +134,7 @@ namespace WADH
                         buttonStart.Enabled = true; // Prevents Start button/logic jitter (Start button was set inactive on "Start" click)
                         labelStatus.Text = $"Processing \"{progress.Addon}\"";
                         break;
-                    case WebViewHelperProgressState.CurseAddonSiteLoaded:
-                        // State not used at the moment
-                        break;
-                    case WebViewHelperProgressState.CursePreludeProgress:
-                        // State not used at the moment
-                        break;
-                    case WebViewHelperProgressState.CursePreludeFinished:
+                    case WebViewHelperProgressState.RedirectsFinished:
                         // State not used at the moment
                         break;
                     case WebViewHelperProgressState.DownloadStarting:

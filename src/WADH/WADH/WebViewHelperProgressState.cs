@@ -3,9 +3,7 @@
     public enum WebViewHelperProgressState
     {
         AddonStarting,
-        CurseAddonSiteLoaded,
-        CursePreludeProgress,
-        CursePreludeFinished,
+        RedirectsFinished,
         DownloadStarting,
         DownloadProgress,
         DownloadFinished,

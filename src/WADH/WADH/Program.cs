@@ -14,13 +14,14 @@ namespace WADH
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             var errorLogger = new ErrorLogger();
+            var curseHelper = new CurseHelper();
             Application.Run(
                 new MainForm(
                     new ExternalToolsHelper(),
-                    new ConfigReader(),
+                    new ConfigReader(curseHelper),
                     errorLogger,
                     new FileSystemHelper(),
-                    new WebViewHelper(new DebugWriter(), new CurseHelper(), errorLogger)));
+                    new WebViewHelper(new DebugWriter(), curseHelper, errorLogger)));
         }
     }
 }
