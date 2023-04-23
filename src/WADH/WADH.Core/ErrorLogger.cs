@@ -31,7 +31,7 @@ namespace WADH.Core
 
             if (!multiLineMessage.Any())
             {
-                throw new ArgumentNullException(nameof(multiLineMessage), "Enumerable is empty.");
+                throw new ArgumentNullException(nameof(multiLineMessage), "Enumerable cannot be empty.");
             }
 
             var message = string.Join(newLine, multiLineMessage);
@@ -53,7 +53,9 @@ namespace WADH.Core
 
             if (!string.IsNullOrEmpty(exception.StackTrace))
             {
-                message += $"{newLine}Exception-StackTrace: {exception.StackTrace}";
+                var formattedStackTrace = exception.StackTrace.Replace(newLine, string.Empty).Replace("   at ", $"{newLine}at ");
+
+                message += $"{newLine}Exception-StackTrace:{formattedStackTrace}";
             }
 
             lock (syncRoot)
@@ -64,7 +66,7 @@ namespace WADH.Core
 
         private void WriteLogEntry(string header, string file, int line, string message)
         {
-            var now = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
+            var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
             file = Path.GetFileName(file);
 

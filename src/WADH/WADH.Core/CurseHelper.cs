@@ -4,17 +4,19 @@ namespace WADH.Core
 {
     public sealed class CurseHelper : ICurseHelper
     {
-        public string AdjustPageAppearanceScript =>
-            "/*let cookiebar = document.querySelector('div#cookiebar');*/" +
-            "/*if (cookiebar) cookiebar.style.visibility = 'hidden';*/" +
+        public string DisableScrollbarScript =>
             "document.body.style.overflow = 'hidden';";
 
-        public string GrabJsonFromAddonPageScript =>
+        public string HideCookiebarScript =>
+            "let cookiebar = document.querySelector('div#cookiebar');" +
+            "if (cookiebar) cookiebar.style.visibility = 'hidden';";
+
+        public string GrabJsonScript =>
             "let script = document.querySelector('script#__NEXT_DATA__');" +
             "let json = script?.innerHTML ?? '';" +
             "json;";
 
-        public bool IsAddonUrl(string url)
+        public bool IsAddonPageUrl(string url)
         {
             // https://www.curseforge.com/wow/addons/coordinates
             url = Guard(url);
@@ -28,7 +30,7 @@ namespace WADH.Core
             return url.StartsWith("https://www.curseforge.com/api/v1/mods/") && url.Contains("/files/") && url.EndsWith("/download");
         }
 
-        public bool IsRedirectUrlWithApiKey(string url)
+        public bool IsRedirectWithApiKeyUrl(string url)
         {
             // https://edge.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip?api-key=267C6CA3
             url = Guard(url);
@@ -42,28 +44,28 @@ namespace WADH.Core
             return url.StartsWith("https://mediafilez.forgecdn.net/files/") && url.EndsWith(".zip");
         }
 
-        public string GetAddonNameFromAddonUrl(string url)
+        public string GetAddonNameFromAddonPageUrl(string url)
         {
             // https://www.curseforge.com/wow/addons/coordinates
             url = Guard(url);
-            return IsAddonUrl(url) ? url.Split("https://www.curseforge.com/wow/addons/").Last().ToLower() : string.Empty;
+            return IsAddonPageUrl(url) ? url.Split("https://www.curseforge.com/wow/addons/").Last().ToLower() : string.Empty;
         }
 
-        public string GetAddonNameFromRedirect1Url(string url)
+        public string GetAddonNameFromFetchedDownloadUrl(string url)
         {
             // https://www.curseforge.com/wow/addons/coordinates/download/4364314/file
             url = Guard(url);
             return IsFetchedDownloadUrl(url) ? url.Split("addons/").Last().Split("/download").First().ToLower() : string.Empty;
         }
 
-        public string GetAddonNameFromDownloadUrl(string url)
+        public string GetAddonNameFromRealDownloadUrl(string url)
         {
             // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
             url = Guard(url);
             return IsRealDownloadUrl(url) ? url.Split('/').Last().Split('-').First().ToLower() : string.Empty;
         }
 
-        public string GetFileNameFromDownloadUrl(string url)
+        public string GetFileNameFromRealDownloadUrl(string url)
         {
             // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
             url = Guard(url);
@@ -97,14 +99,14 @@ namespace WADH.Core
 
                 var project = doc.RootElement.GetProperty("props").GetProperty("pageProps").GetProperty("project");
                 var projectId = project.GetProperty("id").GetUInt64();
-                var name = project.GetProperty("name").GetString() ?? string.Empty;
-                var slug = project.GetProperty("slug").GetString() ?? string.Empty;
+                var projectName = project.GetProperty("name").GetString() ?? string.Empty;
+                var projectSlug = project.GetProperty("slug").GetString() ?? string.Empty;
                 var mainFile = project.GetProperty("mainFile");
-                var mainFileId = mainFile.GetProperty("id").GetUInt64();
+                var fileId = mainFile.GetProperty("id").GetUInt64();
                 var fileName = mainFile.GetProperty("fileName").GetString() ?? string.Empty;
                 var fileSize = mainFile.GetProperty("fileLength").GetUInt64();
 
-                return new CurseHelperJson(true, projectId, name, slug, mainFileId, fileName, fileSize);
+                return new CurseHelperJson(true, projectId, projectName, projectSlug, fileId, fileName, fileSize);
             }
             catch
             {

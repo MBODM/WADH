@@ -40,7 +40,7 @@ namespace WADH.Core
                 Element("root")?.
                 Element("addons")?.
                 Elements()?.
-                Where(e => e.Name == "url" && IsValidCurseUrl(e.Value))?.
+                Where(e => e.Name == "url")?.
                 Select(e => e.Value.Trim().ToLower())?.
                 Distinct() ?? throw new InvalidOperationException(message);
         }
@@ -49,18 +49,27 @@ namespace WADH.Core
         {
             if (DownloadFolder == string.Empty)
             {
-                throw new InvalidOperationException("The config file contains no folder, to download the zip files into.");
+                throw new InvalidOperationException("Config file contains no folder, to download the zip files into.");
+            }
+
+            try
+            {
+                Path.GetFullPath(DownloadFolder);
+            }
+            catch
+            {
+                throw new InvalidOperationException("Config file contains invalid folder, whose content is not a valid filesystem path.");
             }
 
             if (!AddonUrls.Any())
             {
-                throw new InvalidOperationException("The config file contains no valid url, so there is nothing to download.");
+                throw new InvalidOperationException("Config file contains no urls, so there is nothing to download.");
             }
-        }
 
-        private bool IsValidCurseUrl(string url)
-        {
-            return curseHelper.IsAddonUrl(url);
+            if (AddonUrls.Any(url => !curseHelper.IsAddonPageUrl(url)))
+            {
+                throw new InvalidOperationException("Config file contains invalid urls, whose content is not a valid Curse addon url.");
+            }
         }
     }
 }

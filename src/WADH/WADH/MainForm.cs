@@ -28,7 +28,7 @@ namespace WADH
 
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
-            Size = new Size(1280 / 100 * 110, 800 / 100 * 110); // 16:10 format (10% increased to fit addon page size)
+            Size = new Size(1280 / 100 * 109, 800 / 100 * 109); // 16:10 format (9% increased to fit addon page size)
             //panelWebView.Enabled = false; // Prevents user from clicking the web site
             labelWauz.Visible = false;
             Enabled = false;
@@ -41,8 +41,8 @@ namespace WADH
             var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me (since the BL knows the impl type anyway)
             if (!string.IsNullOrEmpty(configFolder))
             {
-                labelConfig.ForeColor = new LinkLabel().LinkColor;
-                labelConfig.Click += (s, e) => externalToolsHelper.OpenExplorer(configFolder);
+                labelConfigFolder.ForeColor = new LinkLabel().LinkColor;
+                labelConfigFolder.Click += (s, e) => externalToolsHelper.OpenExplorer(configFolder);
             }
 
             if (externalToolsHelper.CanOpenWauz())
@@ -57,6 +57,21 @@ namespace WADH
             Enabled = true;
         }
 
+        private void MainForm_Shown(object sender, EventArgs e)
+        {
+            if (!LoadConfig())
+            {
+                Application.Exit();
+            }
+
+            if (!string.IsNullOrEmpty(configReader.DownloadFolder))
+            {
+                labelDownloadFolder.ForeColor = new LinkLabel().LinkColor;
+                labelDownloadFolder.Click += (s, e) => externalToolsHelper.OpenExplorer(configReader.DownloadFolder);
+            }
+
+        }
+
         private async void ButtonStart_Click(object sender, EventArgs e)
         {
             if (buttonStart.Text == "Cancel")
@@ -69,29 +84,6 @@ namespace WADH
 
             if (buttonStart.Text == "Start")
             {
-                try
-                {
-                    configReader.ReadConfig();
-                }
-                catch (Exception ex)
-                {
-                    errorLogger.Log(ex);
-                    ShowError("Error while loading config file (see log for details).");
-
-                    return;
-                }
-
-                try
-                {
-                    configReader.ValidateConfig();
-                }
-                catch (Exception ex)
-                {
-                    ShowError(ex.Message);
-
-                    return;
-                }
-
                 await InitDownloadFolder(configReader.DownloadFolder);
 
                 buttonStart.Text = "Cancel";
@@ -133,6 +125,21 @@ namespace WADH
                     case WebViewHelperProgressState.AddonStarting:
                         buttonStart.Enabled = true; // Prevents Start button/logic jitter (Start button was set inactive on "Start" click)
                         labelStatus.Text = $"Processing \"{progress.Addon}\"";
+                        break;
+                    case WebViewHelperProgressState.NavigatingToAddonPage:
+                        // State not used at the moment
+                        break;
+                    case WebViewHelperProgressState.NavigatingToAddonPageFinished:
+                        // State not used at the moment
+                        break;
+                    case WebViewHelperProgressState.NavigatingToFetchedDownloadUrl:
+                        // State not used at the moment
+                        break;
+                    case WebViewHelperProgressState.RedirectWithApiKey:
+                        // State not used at the moment
+                        break;
+                    case WebViewHelperProgressState.RedirectToRealDownloadUrl:
+                        // State not used at the moment
                         break;
                     case WebViewHelperProgressState.RedirectsFinished:
                         // State not used at the moment
@@ -191,6 +198,24 @@ namespace WADH
             SetButtons(true);
         }
 
+        private bool LoadConfig()
+        {
+            try
+            {
+                configReader.ReadConfig();
+                configReader.ValidateConfig();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorLogger.Log(ex);
+                ShowError("Error while loading config file (see log for details).");
+
+                return false;
+            }
+        }
+
         private async Task InitDownloadFolder(string folder)
         {
             folder = Path.GetFullPath(folder);
@@ -208,7 +233,8 @@ namespace WADH
         private void SetButtons(bool enabled)
         {
             labelWauz.Enabled = enabled;
-            labelConfig.Enabled = enabled;
+            labelDownloadFolder.Enabled = enabled;
+            labelConfigFolder.Enabled = enabled;
             buttonStart.Enabled = enabled;
             buttonClose.Enabled = enabled;
         }

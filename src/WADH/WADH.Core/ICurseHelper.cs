@@ -2,18 +2,19 @@
 {
     public interface ICurseHelper
     {
-        string AdjustPageAppearanceScript { get; }
-        string GrabJsonFromAddonPageScript { get; }
+        string DisableScrollbarScript { get; }
+        string HideCookiebarScript { get; }
+        string GrabJsonScript { get; }
 
-        bool IsAddonUrl(string url);
+        bool IsAddonPageUrl(string url);
         bool IsFetchedDownloadUrl(string url);
-        bool IsRedirectUrlWithApiKey(string url);
+        bool IsRedirectWithApiKeyUrl(string url);
         bool IsRealDownloadUrl(string url);
 
-        string GetAddonNameFromAddonUrl(string url);
-        string GetAddonNameFromRedirect1Url(string url);
-        string GetAddonNameFromDownloadUrl(string url);
-        string GetFileNameFromDownloadUrl(string url);
+        string GetAddonNameFromAddonPageUrl(string url);
+        string GetAddonNameFromFetchedDownloadUrl(string url);
+        string GetAddonNameFromRealDownloadUrl(string url);
+        string GetFileNameFromRealDownloadUrl(string url);
 
         CurseHelperJson SerializeAddonPageJson(string json);
         string BuildDownloadUrl(ulong projectId, ulong fileId);
