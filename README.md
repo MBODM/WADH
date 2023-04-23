@@ -68,9 +68,9 @@ You can choose between _self-contained_ and _framework-dependent_ .NET applicati
 
 ### Notes
 - WADH loads your selected downlod folder and the addon urls from a config file, when the application starts.
-- The config file is named `WADH.xml` and searched in `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder.
+- The config file is named `WADH.xml` and is searched in `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder.
 - WADH writes a log file if some error happens.
-- The log file is named `WADH.log` and stored in `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder.
+- The log file is named `WADH.log` and is stored in `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder.
 - WADH is using the Microsoft Edge WebView2 component, to access the Curse sites.
 - WADH is using WebView2 because https://www.curseforge.com is protected by Cloudflare.
 - WADH deletes all zip files in the given download folder, before the download starts.
