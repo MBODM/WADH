@@ -17,7 +17,7 @@ A small download helper for World of Warcraft addons
 - WADH is looking inside the `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder for a config file named `WADH.xml` (see file format below).
 - WADH is loading that config file and download all given urls sequentially into the given folder, when the "Start" button was pressed.
 
-### XML config file format
+### Config file format
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
