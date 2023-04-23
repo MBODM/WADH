@@ -145,14 +145,14 @@ namespace WADH
             if (webView.Source.ToString() == url)
             {
                 // If the site has already been loaded then the events are not raised without this.
-                // Happens when there is only 1 url in queue. Important i.e. for Start button state.
+                // Happens when there is only 1 URL in queue. Important i.e. for Start button state.
 
                 webView.Stop(); // Just to make sure
                 webView.Reload();
             }
             else
             {
-                // Kick off the whole event chain process, by loading the first url.
+                // Kick off the whole event chain process, by loading the first URL.
 
                 webView.Stop(); // Just to make sure
                 webView.Source = new Uri(addonUrls.First());
@@ -389,17 +389,17 @@ namespace WADH
                     webView.CoreWebView2.DownloadStarting -= CoreWebView2_DownloadStarting;
 
                     debugWriter.PrintInfo(cancellationRequested ?
-                        "Queue of urls is not empty yet, but cancellation occurred. --> !!! Stop and not proceed with next url !!!" :
-                        "Queue of urls is empty, there is nothing else to download. --> !!! All addons successfully downloaded !!!");
+                        "URL-Queue is not empty yet, but cancellation occurred. --> !!! Stop and not proceed with next URL !!!" :
+                        "URL-Queue is empty, there is nothing else to download. --> !!! All addons successfully downloaded !!!");
                     OnDownloadAddonsAsyncCompleted(cancellationRequested);
 
                     return;
                 }
 
-                // Still some addons to download in queue and no cancellation occurred, so proceed with next url.
+                // Still some addons to download in queue and no cancellation occurred, so proceed with next URL.
 
                 var next = addonUrls.Dequeue();
-                debugWriter.PrintInfo($"Queue of urls is not empty yet, so proceed with next url in queue. --> {next}");
+                debugWriter.PrintInfo($"URL-Queue is not empty yet, so proceed with next URL in queue. --> {next}");
 
                 webView.Stop(); // Just to make sure
                 webView.Source = new Uri(next);
@@ -452,14 +452,14 @@ namespace WADH
             if (curseHelper.IsAddonPageUrl(e.Uri) && !e.IsRedirected && e.NavigationId != lastNavigationId)
             {
                 debugWriter.PrintInfo("NavigationStarting #1 (addon page) successful.");
-                var info = "Manually navigating to Curse addon page url now.";
+                var info = "Manually navigating to addon page URL now.";
                 var addon = curseHelper.GetAddonNameFromAddonPageUrl(e.Uri);
                 OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.NavigatingToAddonPage, e.Uri, info, addon);
             }
             else if (curseHelper.IsFetchedDownloadUrl(e.Uri) && !e.IsRedirected && e.NavigationId != lastNavigationId)
             {
-                debugWriter.PrintInfo("NavigationStarting #2 (fetched download url) successful.");
-                var info = "Manually navigating to fetched Curse download url now.";
+                debugWriter.PrintInfo("NavigationStarting #2 (fetched download URL) successful.");
+                var info = "Manually navigating to fetched download URL now.";
                 var addon = curseHelper.GetAddonNameFromFetchedDownloadUrl(e.Uri);
                 OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.NavigatingToFetchedDownloadUrl, e.Uri, info, addon);
             }
@@ -472,7 +472,7 @@ namespace WADH
             }
             else if (curseHelper.IsRealDownloadUrl(e.Uri) && e.IsRedirected && e.NavigationId == lastNavigationId)
             {
-                debugWriter.PrintInfo("NavigationStarting #4 (redirect to real download url) successful.");
+                debugWriter.PrintInfo("NavigationStarting #4 (redirect to real download URL) successful.");
                 var info = "Automatically navigating by redirect now.";
                 var addon = curseHelper.GetAddonNameFromFetchedDownloadUrl(senderWebView.Source.ToString());
                 OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.RedirectToRealDownloadUrl, e.Uri, info, addon);
@@ -490,10 +490,10 @@ namespace WADH
         private async Task<bool> HandleNavigationCompletedAsync(WebView2 senderWebView, string url, CoreWebView2NavigationCompletedEventArgs e)
         {
             // Note: Redirects do not raise this event (in contrast to the starting event).
-            // Therefore only the initial url and the last redirect will raise this event.
+            // Therefore only the initial URL and the last redirect will raise this event.
             // Also note: WebView2 does not change its Source property value, on redirects.
-            // And since there exists no easy way to get the actual redirect location url,
-            // it is not possible to get the url for the last/2nd occurrence of this event.
+            // And since there exists no easy way to get the actual redirect location URL,
+            // it is not possible to get the URL for the last/2nd occurrence of this event.
 
             if (curseHelper.IsAddonPageUrl(url) && e.NavigationId == lastNavigationId && e.IsSuccess && e.HttpStatusCode == 200 &&
                 e.WebErrorStatus == CoreWebView2WebErrorStatus.Unknown)
@@ -532,11 +532,11 @@ namespace WADH
                 var fetchedDownloadUrl = curseHelper.BuildDownloadUrl(model.ProjectId, model.FileId);
                 if (!curseHelper.IsFetchedDownloadUrl(fetchedDownloadUrl))
                 {
-                    errorLogger.Log("Download url (fetched from JSON) not valid.");
+                    errorLogger.Log("Download URL (fetched from JSON) not valid.");
                     return false;
                 }
 
-                debugWriter.PrintInfo($"Fetched download url from JSON --> {fetchedDownloadUrl}");
+                debugWriter.PrintInfo($"Fetched download URL from JSON --> {fetchedDownloadUrl}");
                 debugWriter.PrintInfo($"Manually navigating to that URL now.");
 
                 senderWebView.Stop(); // Just to make sure
@@ -547,7 +547,7 @@ namespace WADH
             {
                 debugWriter.PrintInfo("NavigationCompleted #2 (redirects finished) successful. -- > Download should start now.");
 
-                var realUrl = "There is no easy way to show the real (redirected) url here.";
+                var realUrl = "There is no easy way to show the real (redirected) URL here.";
                 var info = "Automatic redirects finished and download should start now.";
                 var addon = curseHelper.GetAddonNameFromFetchedDownloadUrl(url);
                 OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.RedirectsFinished, realUrl, info, addon);

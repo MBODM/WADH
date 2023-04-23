@@ -28,8 +28,8 @@ namespace WADH
 
             Text = $"WADH {GetVersion()}";
             MinimumSize = Size;
-            Size = new Size(1280 / 100 * 109, 800 / 100 * 109); // 16:10 format (9% increased to fit addon page size)
-            //panelWebView.Enabled = false; // Prevents user from clicking the web site
+            Size = new Size(1280 / 100 * 109, 800 / 100 * 109); // 1280x800 = 16:10 format (9% increased to fit addon page size)
+            //panelWebView.Enabled = false; // Prevent user from clicking the web site
             labelWauz.Visible = false;
             Enabled = false;
         }
@@ -64,30 +64,28 @@ namespace WADH
                 Application.Exit();
             }
 
-            if (!string.IsNullOrEmpty(configReader.DownloadFolder))
-            {
-                labelDownloadFolder.ForeColor = new LinkLabel().LinkColor;
-                labelDownloadFolder.Click += (s, e) => externalToolsHelper.OpenExplorer(configReader.DownloadFolder);
-            }
+            labelDownloadFolder.ForeColor = new LinkLabel().LinkColor;
+            labelDownloadFolder.Click += (s, e) => externalToolsHelper.OpenExplorer(configReader.DownloadFolder);
 
+            labelStatus.Text = $"Ready to download {configReader.AddonUrls.Count()} addons";
         }
 
-        private async void ButtonStart_Click(object sender, EventArgs e)
+        private async void ButtonDownload_Click(object sender, EventArgs e)
         {
-            if (buttonStart.Text == "Cancel")
+            if (buttonDownload.Text == "Cancel")
             {
-                buttonStart.Enabled = false; // Prevents Start button/logic jitter (Start button will become active again in EAP Completed event)
+                buttonDownload.Enabled = false; // Prevent button/logic jitter (button will become active again in EAP Completed event)
                 webViewHelper.CancelDownloadAddonsAsync();
 
                 return;
             }
 
-            if (buttonStart.Text == "Start")
+            if (buttonDownload.Text == "Download")
             {
                 await InitDownloadFolder(configReader.DownloadFolder);
 
-                buttonStart.Text = "Cancel";
-                SetButtons(false); // Prevents Start button/logic jitter (Start button will become active again in EAP Progress event)
+                buttonDownload.Text = "Cancel";
+                SetButtons(false); // Prevent button/logic jitter (button will become active again in EAP Progress event)
 
                 progressBar.Minimum = 0;
                 progressBar.Maximum = 100;
@@ -105,7 +103,7 @@ namespace WADH
                     errorLogger.Log(ex);
                     ShowError("Error while starting download (see log for details).");
 
-                    buttonStart.Text = "Start";
+                    buttonDownload.Text = "Download";
                     SetButtons(true);
                 }
             }
@@ -123,8 +121,8 @@ namespace WADH
                 switch (progress.State)
                 {
                     case WebViewHelperProgressState.AddonStarting:
-                        buttonStart.Enabled = true; // Prevents Start button/logic jitter (Start button was set inactive on "Start" click)
-                        labelStatus.Text = $"Processing \"{progress.Addon}\"";
+                        buttonDownload.Enabled = true; // Prevent button/logic jitter (button was set inactive on click)
+                        labelStatus.Text = $"Downloading \"{progress.Addon}\"";
                         break;
                     case WebViewHelperProgressState.NavigatingToAddonPage:
                         // State not used at the moment
@@ -194,7 +192,7 @@ namespace WADH
                 labelStatus.Text = $"Download of {configReader.AddonUrls.Count()} addons successfully finished";
             }
 
-            buttonStart.Text = "Start";
+            buttonDownload.Text = "Download";
             SetButtons(true);
         }
 
@@ -235,7 +233,7 @@ namespace WADH
             labelWauz.Enabled = enabled;
             labelDownloadFolder.Enabled = enabled;
             labelConfigFolder.Enabled = enabled;
-            buttonStart.Enabled = enabled;
+            buttonDownload.Enabled = enabled;
             buttonClose.Enabled = enabled;
         }
 

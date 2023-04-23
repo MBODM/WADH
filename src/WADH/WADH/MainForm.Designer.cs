@@ -33,7 +33,7 @@
             webView = new Microsoft.Web.WebView2.WinForms.WebView2();
             labelStatus = new Label();
             progressBar = new ProgressBar();
-            buttonStart = new Button();
+            buttonDownload = new Button();
             labelWauz = new Label();
             labelConfigFolder = new Label();
             buttonClose = new Button();
@@ -84,23 +84,24 @@
             progressBar.Size = new Size(760, 25);
             progressBar.TabIndex = 3;
             // 
-            // buttonStart
+            // buttonDownload
             // 
-            buttonStart.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            buttonStart.Location = new Point(616, 393);
-            buttonStart.Name = "buttonStart";
-            buttonStart.Size = new Size(75, 25);
-            buttonStart.TabIndex = 0;
-            buttonStart.Text = "Start";
-            buttonStart.UseVisualStyleBackColor = true;
-            buttonStart.Click += ButtonStart_Click;
+            buttonDownload.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonDownload.Location = new Point(616, 393);
+            buttonDownload.Margin = new Padding(10, 3, 3, 3);
+            buttonDownload.Name = "buttonDownload";
+            buttonDownload.Size = new Size(75, 25);
+            buttonDownload.TabIndex = 0;
+            buttonDownload.Text = "Download";
+            buttonDownload.UseVisualStyleBackColor = true;
+            buttonDownload.Click += ButtonDownload_Click;
             // 
             // labelWauz
             // 
             labelWauz.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             labelWauz.AutoSize = true;
             labelWauz.Cursor = Cursors.Hand;
-            labelWauz.Location = new Point(292, 398);
+            labelWauz.Location = new Point(338, 398);
             labelWauz.Name = "labelWauz";
             labelWauz.Size = new Size(73, 15);
             labelWauz.TabIndex = 6;
@@ -111,11 +112,11 @@
             labelConfigFolder.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             labelConfigFolder.AutoSize = true;
             labelConfigFolder.Cursor = Cursors.Hand;
-            labelConfigFolder.Location = new Point(503, 398);
+            labelConfigFolder.Location = new Point(522, 398);
             labelConfigFolder.Name = "labelConfigFolder";
-            labelConfigFolder.Size = new Size(107, 15);
-            labelConfigFolder.TabIndex = 7;
-            labelConfigFolder.Text = "Open config folder";
+            labelConfigFolder.Size = new Size(81, 15);
+            labelConfigFolder.TabIndex = 8;
+            labelConfigFolder.Text = "Config-Folder";
             // 
             // buttonClose
             // 
@@ -133,11 +134,11 @@
             labelDownloadFolder.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             labelDownloadFolder.AutoSize = true;
             labelDownloadFolder.Cursor = Cursors.Hand;
-            labelDownloadFolder.Location = new Point(371, 398);
+            labelDownloadFolder.Location = new Point(417, 398);
             labelDownloadFolder.Name = "labelDownloadFolder";
-            labelDownloadFolder.Size = new Size(126, 15);
-            labelDownloadFolder.TabIndex = 8;
-            labelDownloadFolder.Text = "Open download folder";
+            labelDownloadFolder.Size = new Size(99, 15);
+            labelDownloadFolder.TabIndex = 7;
+            labelDownloadFolder.Text = "Download-Folder";
             // 
             // MainForm
             // 
@@ -149,7 +150,7 @@
             Controls.Add(buttonClose);
             Controls.Add(labelConfigFolder);
             Controls.Add(labelWauz);
-            Controls.Add(buttonStart);
+            Controls.Add(buttonDownload);
             Controls.Add(progressBar);
             Controls.Add(labelStatus);
             Controls.Add(panelWebView);
@@ -170,7 +171,7 @@
         private Panel panelWebView;
         private Label labelStatus;
         private ProgressBar progressBar;
-        private Button buttonStart;
+        private Button buttonDownload;
         private Label labelWauz;
         private Label labelConfigFolder;
         private Microsoft.Web.WebView2.WinForms.WebView2 webView;
