@@ -38,7 +38,7 @@ A small download helper for World of Warcraft addons
 ```
 
 When started WADH validates if
-- the config file exists (see section [Notes](#Notes) for file location)
+- the config file exists (see [Notes](#Notes) section for file location)
 - the file has a general XML file format
 - the `root` tag exists
 - the `folder` tag exists
