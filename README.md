@@ -38,6 +38,7 @@ A small download helper for World of Warcraft addons
 ```
 
 When started WADH validates if
+- the config file exists (see section [Notes](#Notes) for file location)
 - the file has a general XML file format
 - the `root` tag exists
 - the `folder` tag exists
@@ -67,7 +68,7 @@ You can choose between _self-contained_ and _framework-dependent_ .NET applicati
 
 ### Notes
 - WADH loads your selected downlod folder and the addon urls from a config file.
-- WADH loads that data when you press the "Start" button.
+- WADH loads that data when the application is started.
 - WADH writes a log file if some error happens.
 - You can find both files (config and log) in the "C:\Users\YOUR_USER_NAME\AppData\Local\MBODM" folder.
 - WADH is using the Microsoft Edge WebView2 webview component, to access the download site.
