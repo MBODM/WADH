@@ -45,7 +45,7 @@ When started WADH validates if
 - the `addons` tag exists
 - the `folder` tag contains a valid folder path
 - the `addons` tag contains at least 1 `url` tag
-- all `url` tags (inside the `addons` tag) contain a valid Curse addon page url
+- every `url` tags (inside the `addons` tag) contains a valid Curse addon page url
 
 All other tags or comments are simply ignored by the application.
 
