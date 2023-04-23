@@ -37,7 +37,7 @@ A small download helper for World of Warcraft addons
 </root>
 ```
 
-The application validates if
+When started WADH validates if
 - the file has a general XML file format
 - the `root` tag exists
 - the `folder` tag exists
