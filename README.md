@@ -37,13 +37,13 @@ A small download helper for World of Warcraft addons
 </root>
 ```
 
-The following things are validated by the application:
-- General XML file format
-- Existence of `root` tag
-- Existence of `folder` tag
-- Existence of `addons` tag
-- Content of the `folder` tag (has to be a valid folder path)
-- Content of all `url` tags inside the `addons` tag (`url` content has to be a valid Curse addon page url)
+The application validates at start if
+- the file has a general XML file format
+- the `root` tag exists
+- the `folder` tag exists
+- the `addons` tag exists and contains at least 1 `url` tag
+- the `folder` tag contains a valid folder path
+- all `url` tags (inside the `addons` tag) contain a valid Curse addon page url
 
 All other tags or comments are simply ignored by the application.
 
