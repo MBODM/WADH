@@ -43,7 +43,7 @@ The application validates if
 - the `folder` tag exists
 - the `addons` tag exists
 - the `folder` tag contains a valid folder path
-- the `addons` contains at least 1 `url` tag
+- the `addons` tag contains at least 1 `url` tag
 - all `url` tags (inside the `addons` tag) contain a valid Curse addon page url
 
 All other tags or comments are simply ignored by the application.
