@@ -24,20 +24,28 @@ XML config file format:
 <root>
 	<folder>C:\Data\Addons</folder>
 	<addons>
-		<url>https://www.curseforge.com/wow/addons/coordinates/download</url>
-		<url>https://www.curseforge.com/wow/addons/deadly-boss-mods/download</url>
-		<url>https://www.curseforge.com/wow/addons/details/download</url>
-		<url>https://www.curseforge.com/wow/addons/groupfinderflags/download</url>
-		<url>https://www.curseforge.com/wow/addons/handynotes/download</url>
-		<url>https://www.curseforge.com/wow/addons/handynotes-dragonflight/download</url>
-		<url>https://www.curseforge.com/wow/addons/mythic-dungeon-tools/download</url>
-		<url>https://www.curseforge.com/wow/addons/raiderio/download</url>
-		<url>https://www.curseforge.com/wow/addons/simulationcraft/download</url>
-		<url>https://www.curseforge.com/wow/addons/tomtom/download</url>
-		<url>https://www.curseforge.com/wow/addons/weakauras-2/download</url>
+		<url>https://www.curseforge.com/wow/addons/coordinates</url>
+		<url>https://www.curseforge.com/wow/addons/deadly-boss-mods</url>
+		<url>https://www.curseforge.com/wow/addons/details</url>
+		<url>https://www.curseforge.com/wow/addons/groupfinderflags</url>
+		<url>https://www.curseforge.com/wow/addons/mythic-dungeon-tools</url>
+		<url>https://www.curseforge.com/wow/addons/raiderio</url>
+		<url>https://www.curseforge.com/wow/addons/simulationcraft</url>
+		<url>https://www.curseforge.com/wow/addons/tomtom</url>
+		<url>https://www.curseforge.com/wow/addons/weakauras-2</url>
 	</addons>
 </root>
 ```
+
+The following things are validated by the application:
+- General XML file format
+- Existence of `root` tag
+- Existence of `folder` tag
+- Existence of `addons` tag
+- Content of the `folder` tag (has to be a valid folder path)
+- Content of all `url` tags inside the `addons` tag (`url` content has to be a valid Curse addon page url)
+
+All other tags or comments are simply ignored by the application.
 
 ### Why it exists
 I developed a download manager for World of Warcraft addons, called [WADM](https://github.com/mbodm/wadm), over a decade ago. For many many years WADM handled all of our needs with ease, when it comes down to downloading and updating the addons. But since Curse/Overwolf changed their political stance, alternative download managers (like mine, Ajour, WowUp, or others) no longer works with the https://www.curseforge.com site, or their REST web service. The only option is to use their own addon download manager. Many of us don´t want that, for different reasons.
