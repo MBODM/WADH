@@ -17,27 +17,37 @@ A small download helper for World of Warcraft addons
 - WADH is looking inside the `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder for a config file named `WADH.xml` (see file format below).
 - WADH is loading that config file and download all given urls sequentially into the given folder, when the "Start" button was pressed.
 
-XML config file format:
+### Config file format
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <root>
 	<folder>C:\Data\Addons</folder>
 	<addons>
-		<url>https://www.curseforge.com/wow/addons/coordinates/download</url>
-		<url>https://www.curseforge.com/wow/addons/deadly-boss-mods/download</url>
-		<url>https://www.curseforge.com/wow/addons/details/download</url>
-		<url>https://www.curseforge.com/wow/addons/groupfinderflags/download</url>
-		<url>https://www.curseforge.com/wow/addons/handynotes/download</url>
-		<url>https://www.curseforge.com/wow/addons/handynotes-dragonflight/download</url>
-		<url>https://www.curseforge.com/wow/addons/mythic-dungeon-tools/download</url>
-		<url>https://www.curseforge.com/wow/addons/raiderio/download</url>
-		<url>https://www.curseforge.com/wow/addons/simulationcraft/download</url>
-		<url>https://www.curseforge.com/wow/addons/tomtom/download</url>
-		<url>https://www.curseforge.com/wow/addons/weakauras-2/download</url>
+		<url>https://www.curseforge.com/wow/addons/coordinates</url>
+		<url>https://www.curseforge.com/wow/addons/deadly-boss-mods</url>
+		<url>https://www.curseforge.com/wow/addons/details</url>
+		<url>https://www.curseforge.com/wow/addons/groupfinderflags</url>
+		<url>https://www.curseforge.com/wow/addons/mythic-dungeon-tools</url>
+		<url>https://www.curseforge.com/wow/addons/raiderio</url>
+		<url>https://www.curseforge.com/wow/addons/simulationcraft</url>
+		<url>https://www.curseforge.com/wow/addons/tomtom</url>
+		<url>https://www.curseforge.com/wow/addons/weakauras-2</url>
 	</addons>
 </root>
 ```
+
+When started WADH validates if
+- the config file exists (see [Notes](#Notes) section for file location)
+- the file has a general XML file format
+- the `root` tag exists
+- the `folder` tag exists
+- the `addons` tag exists
+- the `folder` tag contains a valid folder path
+- the `addons` tag contains at least 1 `url` tag
+- every `url` tag (inside the `addons` tag) contains a valid Curse addon page url
+
+All other tags or comments are simply ignored by the application.
 
 ### Why it exists
 I developed a download manager for World of Warcraft addons, called [WADM](https://github.com/mbodm/wadm), over a decade ago. For many many years WADM handled all of our needs with ease, when it comes down to downloading and updating the addons. But since Curse/Overwolf changed their political stance, alternative download managers (like mine, Ajour, WowUp, or others) no longer works with the https://www.curseforge.com site, or their REST web service. The only option is to use their own addon download manager. Many of us don´t want that, for different reasons.
@@ -57,17 +67,17 @@ There are not any other special requirements. All the release-binaries are compi
 You can choose between _self-contained_ and _framework-dependent_ .NET application builds, when downloading a release. If you want to run the _framework-dependent_ version, you need (as additional requirement) the .NET 6 runtime installed on your machine. You can find more information about that topic on the [Releases](https://github.com/mbodm/wadh/releases) page.
 
 ### Notes
-- WADH loads your selected downlod folder and the addon urls from a config file.
-- WADH loads that data when you press the "Start" button.
+- WADH loads your selected downlod folder and the addon urls from a config file, when the application starts.
+- The config file is named `WADH.xml` and is searched in `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder.
 - WADH writes a log file if some error happens.
-- You can find both files (config and log) in the "C:\Users\YOUR_USER_NAME\AppData\Local\MBODM" folder.
-- WADH is using the Microsoft Edge WebView2 webview component, to access the download site.
-- The reason for this: https://www.curseforge.com is protected by Cloudflare.
+- The log file is named `WADH.log` and is stored in `C:\Users\YOUR_USER_NAME\AppData\Local\MBODM` folder.
+- WADH is using the Microsoft Edge WebView2 component, to access the Curse sites.
+- WADH is using WebView2 because https://www.curseforge.com is protected by Cloudflare.
 - WADH deletes all zip files in the given download folder, before the download starts.
 - WADH is written in C# and developed with .NET 6, in Visual Studio 2022.
 - WADH is using Windows.Forms as UI framework (yes, because "rapid development").
 - I never compiled WADH with other tools, like Rider or VS Code. I solely used Visual Studio 2022 Community.
-- If you want to compile by yourself, you can just use i.e. Visual Studio 2022 (any edition). You need nothing else.
+- If you want to compile WADH by yourself, just install Visual Studio 2022 (any edition). You need nothing else.
 - The release-binaries are compiled with "win-x64" as target platform (self-contained and framework-dependent).
 - The release-binaries are compiled with "ReadyToRun compilation", checked in the Visual Studio Publish dialog.
 - WADH is under MIT license. Feel free to use the source and do whatever you want. I assume no liability.
