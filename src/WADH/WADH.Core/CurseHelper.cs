@@ -53,8 +53,15 @@ namespace WADH.Core
 
         public string GetAddonNameFromFetchedDownloadUrl(string url)
         {
-            // https://www.curseforge.com/wow/addons/coordinates/download/4364314/file
+            // https://www.curseforge.com/api/v1/mods/298607/files/4364314/download
             url = Guard(url);
+
+            // Todo:
+            // das ganze vlt anderst aufziehen ? zb addon-infos aus json ziehen und dieses überall hin als userstate mitgeben ?
+            // wie kommen die redirects dann hin ?
+            // dabei auch gesehen: ich zweckentfremde negativ das userstate konzept. eigentlich gibt sich der user beim starten
+            // selbst was mit um die progresschanged events unterscheiden zu können.
+            
             return IsFetchedDownloadUrl(url) ? url.Split("addons/").Last().Split("/download").First().ToLower() : string.Empty;
         }
 
