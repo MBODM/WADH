@@ -11,12 +11,8 @@
         bool IsRedirectWithApiKeyUrl(string url);
         bool IsRealDownloadUrl(string url);
 
-        string GetAddonNameFromAddonPageUrl(string url);
-        string GetAddonNameFromFetchedDownloadUrl(string url);
-        string GetAddonNameFromRealDownloadUrl(string url);
-        string GetFileNameFromRealDownloadUrl(string url);
-
+        string GetAddonSlugNameFromAddonPageUrl(string url);
         CurseHelperJson SerializeAddonPageJson(string json);
-        string BuildDownloadUrl(ulong projectId, ulong fileId);
+        string BuildFetchedDownloadUrl(ulong projectId, ulong fileId);
     }
 }

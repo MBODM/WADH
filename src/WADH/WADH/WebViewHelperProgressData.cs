@@ -1,6 +1,6 @@
 ﻿namespace WADH
 {
-    public sealed record WebViewHelperProgress(
+    public sealed record WebViewHelperProgressData(
         WebViewHelperProgressState State,
         string Url,
         string Info = "",

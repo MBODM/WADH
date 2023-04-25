@@ -18,65 +18,37 @@ namespace WADH.Core
 
         public bool IsAddonPageUrl(string url)
         {
-            // https://www.curseforge.com/wow/addons/coordinates
+            // https://www.curseforge.com/wow/addons/deadly-boss-mods
             url = Guard(url);
             return url.StartsWith("https://www.curseforge.com/wow/addons/") && !url.EndsWith("/addons");
         }
 
         public bool IsFetchedDownloadUrl(string url)
         {
-            // https://www.curseforge.com/api/v1/mods/298607/files/4364314/download
+            // https://www.curseforge.com/api/v1/mods/3358/files/4485146/download
             url = Guard(url);
             return url.StartsWith("https://www.curseforge.com/api/v1/mods/") && url.Contains("/files/") && url.EndsWith("/download");
         }
 
         public bool IsRedirectWithApiKeyUrl(string url)
         {
-            // https://edge.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip?api-key=267C6CA3
+            // https://edge.forgecdn.net/files/4485/146/DBM-10.0.35.zip?api-key=267C6CA3
             url = Guard(url);
             return url.StartsWith("https://edge.forgecdn.net/files/") && url.Contains("?api-key=");
         }
 
         public bool IsRealDownloadUrl(string url)
         {
-            // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
+            // https://mediafilez.forgecdn.net/files/4485/146/DBM-10.0.35.zip
             url = Guard(url);
             return url.StartsWith("https://mediafilez.forgecdn.net/files/") && url.EndsWith(".zip");
         }
 
-        public string GetAddonNameFromAddonPageUrl(string url)
+        public string GetAddonSlugNameFromAddonPageUrl(string url)
         {
-            // https://www.curseforge.com/wow/addons/coordinates
+            // https://www.curseforge.com/wow/addons/deadly-boss-mods
             url = Guard(url);
             return IsAddonPageUrl(url) ? url.Split("https://www.curseforge.com/wow/addons/").Last().ToLower() : string.Empty;
-        }
-
-        public string GetAddonNameFromFetchedDownloadUrl(string url)
-        {
-            // https://www.curseforge.com/api/v1/mods/298607/files/4364314/download
-            url = Guard(url);
-
-            // Todo:
-            // das ganze vlt anderst aufziehen ? zb addon-infos aus json ziehen und dieses überall hin als userstate mitgeben ?
-            // wie kommen die redirects dann hin ?
-            // dabei auch gesehen: ich zweckentfremde negativ das userstate konzept. eigentlich gibt sich der user beim starten
-            // selbst was mit um die progresschanged events unterscheiden zu können.
-            
-            return IsFetchedDownloadUrl(url) ? url.Split("addons/").Last().Split("/download").First().ToLower() : string.Empty;
-        }
-
-        public string GetAddonNameFromRealDownloadUrl(string url)
-        {
-            // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
-            url = Guard(url);
-            return IsRealDownloadUrl(url) ? url.Split('/').Last().Split('-').First().ToLower() : string.Empty;
-        }
-
-        public string GetFileNameFromRealDownloadUrl(string url)
-        {
-            // https://mediafilez.forgecdn.net/files/4364/314/Coordinates-2.4.1.zip
-            url = Guard(url);
-            return IsRealDownloadUrl(url) ? url.Split('/').Last() : string.Empty;
         }
 
         public CurseHelperJson SerializeAddonPageJson(string json)
@@ -121,7 +93,7 @@ namespace WADH.Core
             }
         }
 
-        public string BuildDownloadUrl(ulong projectId, ulong fileId)
+        public string BuildFetchedDownloadUrl(ulong projectId, ulong fileId)
         {
             // https://www.curseforge.com/api/v1/mods/3358/files/4485146/download
 

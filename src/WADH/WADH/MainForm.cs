@@ -116,30 +116,38 @@ namespace WADH
 
         private void WebViewHelper_DownloadAddonsAsyncProgressChanged(object? sender, ProgressChangedEventArgs e)
         {
-            if (e.UserState is WebViewHelperProgress progress)
+            if (e is WebViewHelperProgressChangedEventArgs eventArgs && eventArgs.ProgressData is not null)
             {
-                switch (progress.State)
+                var progressData = eventArgs.ProgressData;
+
+                switch (progressData.State)
                 {
                     case WebViewHelperProgressState.AddonStarting:
                         buttonDownload.Enabled = true; // Prevent button/logic jitter (button was set inactive on click)
-                        labelStatus.Text = $"Downloading \"{progress.Addon}\"";
+                        labelStatus.Text = $"Downloading \"{progressData.Addon}\"";
                         break;
-                    case WebViewHelperProgressState.NavigatingToAddonPage:
+                    case WebViewHelperProgressState.NavigationToAddonPageStarting:
                         // State not used at the moment
                         break;
-                    case WebViewHelperProgressState.NavigatingToAddonPageFinished:
+                    case WebViewHelperProgressState.NavigationToAddonPageFinished:
                         // State not used at the moment
                         break;
-                    case WebViewHelperProgressState.NavigatingToFetchedDownloadUrl:
+                    case WebViewHelperProgressState.EvaluationOfAddonPageJsonStarting:
                         // State not used at the moment
                         break;
-                    case WebViewHelperProgressState.RedirectWithApiKey:
+                    case WebViewHelperProgressState.EvaluationOfAddonPageJsonFinished:
+                        labelStatus.Text = $"Downloading \"{progressData.Addon}\"";
+                        break;
+                    case WebViewHelperProgressState.NavigationToFetchedDownloadUrlStarting:
                         // State not used at the moment
                         break;
-                    case WebViewHelperProgressState.RedirectToRealDownloadUrl:
+                    case WebViewHelperProgressState.RedirectWithApiKeyStarting:
                         // State not used at the moment
                         break;
-                    case WebViewHelperProgressState.RedirectsFinished:
+                    case WebViewHelperProgressState.RedirectToRealDownloadUrlStarting:
+                        // State not used at the moment
+                        break;
+                    case WebViewHelperProgressState.NavigationAndRedirectsFinished:
                         // State not used at the moment
                         break;
                     case WebViewHelperProgressState.DownloadStarting:
@@ -148,11 +156,11 @@ namespace WADH
                     case WebViewHelperProgressState.DownloadProgress:
                         // This may not necessary here, since this event/state combination happens for large addons only.
                         // But just relying on some implementation is a bad move, so better make sure it is a large addon.
-                        if (progress.Total > 1024 * 1024) // 1024 * 1024 = 1 MB
+                        if (progressData.Total > 1024 * 1024) // 1024 * 1024 = 1 MB
                         {
-                            labelStatus.Text = $"Downloading \"{progress.Addon}\"";
-                            var received = (double)(progress.Received / 1024) / 1024;
-                            var total = (double)(progress.Total / 1024) / 1024;
+                            labelStatus.Text = $"Downloading \"{progressData.Addon}\"";
+                            var received = (double)(progressData.Received / 1024) / 1024;
+                            var total = (double)(progressData.Total / 1024) / 1024;
                             labelStatus.Text += $" ({received:0.00} MB / {total:0.00} MB)".Replace(',', '.');
                         }
                         break;
