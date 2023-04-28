@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel;
-using Microsoft.Web.WebView2.WinForms;
+using Microsoft.Web.WebView2.Core;
 
-namespace WADH
+namespace WADH.WebView
 {
     public interface IWebViewHelper
     {
-        Task InitAsync(WebView2 webView);
+        Task<CoreWebView2Environment> CreateEnvironmentAsync();
+        void Initialize(CoreWebView2 coreWebView);
         void ShowStartPage();
 
         // Not using some TAP pattern here, to encapsulate the EAP pattern (on which WebView2 is built on). On purpose. Here is why:

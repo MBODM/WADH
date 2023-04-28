@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using WADH.Core;
+using WADH.WebView;
 
 namespace WADH
 {
@@ -36,7 +37,33 @@ namespace WADH
 
         private async void MainForm_Load(object sender, EventArgs e)
         {
-            await webViewHelper.InitAsync(webView);
+            // The Microsoft WebView2 docs say: The CoreWebView2InitializationCompleted event is fired even before
+            // the EnsureCoreWebView2Async() method ends. Therefore just awaiting that method is all we need here.
+            
+            var env = await webViewHelper.CreateEnvironmentAsync();
+            await webView.EnsureCoreWebView2Async(env);
+            webViewHelper.Initialize(webView.CoreWebView2);
+
+            // 100% Windows-Setting --> DeviceDpi of  96
+            // 125% Windows-Setting --> DeviceDpi of 120
+            // 150% Windows-Setting --> DeviceDpi of 144
+
+            if (DeviceDpi == 96)
+            {
+                webView.ZoomFactor = 1.00;
+            }
+            else if (DeviceDpi == 120)
+            {
+                webView.ZoomFactor = 0.71;
+            }
+            else if (DeviceDpi == 144)
+            {
+                webView.ZoomFactor = 0.60;
+            }
+            else
+            {
+                webView.ZoomFactor = 1.00;
+            }
 
             var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me (since the BL knows the impl type anyway)
             if (!string.IsNullOrEmpty(configFolder))
@@ -145,6 +172,9 @@ namespace WADH
                         // State not used at the moment
                         break;
                     case WebViewHelperProgressState.RedirectToRealDownloadUrlStarting:
+                        // State not used at the moment
+                        break;
+                    case WebViewHelperProgressState.NavigationToFetchedDownloadUrlFinished:
                         // State not used at the moment
                         break;
                     case WebViewHelperProgressState.NavigationAndRedirectsFinished:

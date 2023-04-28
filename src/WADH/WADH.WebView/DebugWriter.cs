@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Web.WebView2.Core;
 
-namespace WADH
+namespace WADH.WebView
 {
     public sealed class DebugWriter : IDebugWriter
     {

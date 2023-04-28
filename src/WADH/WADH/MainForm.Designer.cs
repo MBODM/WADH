@@ -47,9 +47,10 @@
             panelWebView.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             panelWebView.BorderStyle = BorderStyle.FixedSingle;
             panelWebView.Controls.Add(webView);
-            panelWebView.Location = new Point(12, 12);
+            panelWebView.Location = new Point(17, 20);
+            panelWebView.Margin = new Padding(4, 5, 4, 5);
             panelWebView.Name = "panelWebView";
-            panelWebView.Size = new Size(760, 375);
+            panelWebView.Size = new Size(1085, 624);
             panelWebView.TabIndex = 4;
             // 
             // webView
@@ -59,8 +60,9 @@
             webView.DefaultBackgroundColor = Color.White;
             webView.Dock = DockStyle.Fill;
             webView.Location = new Point(0, 0);
+            webView.Margin = new Padding(4, 5, 4, 5);
             webView.Name = "webView";
-            webView.Size = new Size(758, 373);
+            webView.Size = new Size(1083, 622);
             webView.TabIndex = 5;
             webView.TabStop = false;
             webView.ZoomFactor = 1D;
@@ -69,28 +71,29 @@
             // 
             labelStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             labelStatus.AutoSize = true;
-            labelStatus.Location = new Point(9, 406);
+            labelStatus.Location = new Point(13, 677);
             labelStatus.Margin = new Padding(0);
             labelStatus.Name = "labelStatus";
-            labelStatus.Size = new Size(39, 15);
+            labelStatus.Size = new Size(60, 25);
             labelStatus.TabIndex = 2;
             labelStatus.Text = "Ready";
             // 
             // progressBar
             // 
             progressBar.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            progressBar.Location = new Point(12, 424);
+            progressBar.Location = new Point(17, 707);
+            progressBar.Margin = new Padding(4, 5, 4, 5);
             progressBar.Name = "progressBar";
-            progressBar.Size = new Size(760, 25);
+            progressBar.Size = new Size(1086, 42);
             progressBar.TabIndex = 3;
             // 
             // buttonDownload
             // 
             buttonDownload.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            buttonDownload.Location = new Point(616, 393);
-            buttonDownload.Margin = new Padding(10, 3, 3, 3);
+            buttonDownload.Location = new Point(880, 655);
+            buttonDownload.Margin = new Padding(14, 5, 4, 5);
             buttonDownload.Name = "buttonDownload";
-            buttonDownload.Size = new Size(75, 25);
+            buttonDownload.Size = new Size(107, 42);
             buttonDownload.TabIndex = 0;
             buttonDownload.Text = "Download";
             buttonDownload.UseVisualStyleBackColor = true;
@@ -101,9 +104,10 @@
             labelWauz.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             labelWauz.AutoSize = true;
             labelWauz.Cursor = Cursors.Hand;
-            labelWauz.Location = new Point(338, 398);
+            labelWauz.Location = new Point(483, 663);
+            labelWauz.Margin = new Padding(4, 0, 4, 0);
             labelWauz.Name = "labelWauz";
-            labelWauz.Size = new Size(73, 15);
+            labelWauz.Size = new Size(111, 25);
             labelWauz.TabIndex = 6;
             labelWauz.Text = "Open WAUZ";
             // 
@@ -112,18 +116,20 @@
             labelConfigFolder.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             labelConfigFolder.AutoSize = true;
             labelConfigFolder.Cursor = Cursors.Hand;
-            labelConfigFolder.Location = new Point(522, 398);
+            labelConfigFolder.Location = new Point(746, 663);
+            labelConfigFolder.Margin = new Padding(4, 0, 4, 0);
             labelConfigFolder.Name = "labelConfigFolder";
-            labelConfigFolder.Size = new Size(81, 15);
+            labelConfigFolder.Size = new Size(122, 25);
             labelConfigFolder.TabIndex = 8;
             labelConfigFolder.Text = "Config-Folder";
             // 
             // buttonClose
             // 
             buttonClose.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            buttonClose.Location = new Point(697, 393);
+            buttonClose.Location = new Point(996, 655);
+            buttonClose.Margin = new Padding(4, 5, 4, 5);
             buttonClose.Name = "buttonClose";
-            buttonClose.Size = new Size(75, 25);
+            buttonClose.Size = new Size(107, 42);
             buttonClose.TabIndex = 1;
             buttonClose.Text = "Close";
             buttonClose.UseVisualStyleBackColor = true;
@@ -134,18 +140,19 @@
             labelDownloadFolder.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             labelDownloadFolder.AutoSize = true;
             labelDownloadFolder.Cursor = Cursors.Hand;
-            labelDownloadFolder.Location = new Point(417, 398);
+            labelDownloadFolder.Location = new Point(596, 663);
+            labelDownloadFolder.Margin = new Padding(4, 0, 4, 0);
             labelDownloadFolder.Name = "labelDownloadFolder";
-            labelDownloadFolder.Size = new Size(99, 15);
+            labelDownloadFolder.Size = new Size(151, 25);
             labelDownloadFolder.TabIndex = 7;
             labelDownloadFolder.Text = "Download-Folder";
             // 
             // MainForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
-            ClientSize = new Size(784, 461);
+            ClientSize = new Size(1120, 768);
             Controls.Add(labelDownloadFolder);
             Controls.Add(buttonClose);
             Controls.Add(labelConfigFolder);
@@ -155,6 +162,7 @@
             Controls.Add(labelStatus);
             Controls.Add(panelWebView);
             Icon = (Icon)resources.GetObject("$this.Icon");
+            Margin = new Padding(4, 5, 4, 5);
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "MainForm";

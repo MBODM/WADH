@@ -5,10 +5,16 @@ VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WADH", "WADH\WADH.csproj", "{4193ECDA-284C-4707-813E-7004116409B1}"
 	ProjectSection(ProjectDependencies) = postProject
+		{444FE1E5-4E71-4E9F-9E6C-2F18052F15A2} = {444FE1E5-4E71-4E9F-9E6C-2F18052F15A2}
 		{6E231705-B099-416E-A902-27A02B749E4C} = {6E231705-B099-416E-A902-27A02B749E4C}
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WADH.Core", "WADH.Core\WADH.Core.csproj", "{6E231705-B099-416E-A902-27A02B749E4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WADH.WebView", "WADH.WebView\WADH.WebView.csproj", "{444FE1E5-4E71-4E9F-9E6C-2F18052F15A2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6E231705-B099-416E-A902-27A02B749E4C} = {6E231705-B099-416E-A902-27A02B749E4C}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,6 +30,10 @@ Global
 		{6E231705-B099-416E-A902-27A02B749E4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E231705-B099-416E-A902-27A02B749E4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E231705-B099-416E-A902-27A02B749E4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{444FE1E5-4E71-4E9F-9E6C-2F18052F15A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{444FE1E5-4E71-4E9F-9E6C-2F18052F15A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{444FE1E5-4E71-4E9F-9E6C-2F18052F15A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{444FE1E5-4E71-4E9F-9E6C-2F18052F15A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

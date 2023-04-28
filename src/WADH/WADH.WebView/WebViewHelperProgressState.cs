@@ -1,4 +1,4 @@
-﻿namespace WADH
+﻿namespace WADH.WebView
 {
     public enum WebViewHelperProgressState
     {
@@ -10,6 +10,7 @@
         NavigationToFetchedDownloadUrlStarting,
         RedirectWithApiKeyStarting,
         RedirectToRealDownloadUrlStarting,
+        NavigationToFetchedDownloadUrlFinished,
         NavigationAndRedirectsFinished,
         DownloadStarting,
         DownloadProgress,
