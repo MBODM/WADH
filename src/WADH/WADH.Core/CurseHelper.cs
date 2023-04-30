@@ -8,13 +8,10 @@ namespace WADH.Core
             "document.body.style.overflow = 'hidden';";
 
         public string HideCookiebarScript =>
-            "let cookiebar = document.querySelector('div#cookiebar');" +
-            "if (cookiebar) cookiebar.style.visibility = 'hidden';";
+            "document.querySelector('script[src*=\"cookiebar\"]').onload = () => document.querySelector('#cookiebar').style.visibility = 'hidden';";
 
         public string GrabJsonScript =>
-            "let script = document.querySelector('script#__NEXT_DATA__');" +
-            "let json = script?.innerHTML ?? '';" +
-            "json;";
+            "document.querySelector('script#__NEXT_DATA__')?.innerHTML ?? '';";
 
         public bool IsAddonPageUrl(string url)
         {

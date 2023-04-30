@@ -217,45 +217,10 @@ namespace WADH.WebView
 
                 debugWriter.PrintInfo("Execute script now, to disable scrollbar...");
                 await senderCoreWebView.ExecuteScriptAsync(curseHelper.DisableScrollbarScript);
+                debugWriter.PrintInfo("Script executed.");
 
-
-
-                // Todo: Hier gehts weiter...
-
-                var s =
-                    "console.log('start block...');" +
-                    "let cookiebarscript = document.querySelector('script[src*=\"cookiebar\"]');" +
-                    "if (cookiebarscript) {" +
-                    "console.log('print now script and body');" +
-                    "console.log(cookiebarscript);" +
-                    "console.log(document.body);" +
-                    "console.log('add handler now to script');" +
-                    "cookiebarscript.onload = e => {" +
-                    "console.log(e);" +
-                    "};" +
-                    //"console.log(e);" +
-                    //"let cookiebar = document.querySelector('div#cookiebar');" +
-                    //"if (cookiebar) cookiebar.style.visibility = 'hidden';" +
-                    //"};" +
-                    "console.log('print now script and body');" +
-                    "console.log(cookiebarscript);" +
-                    "console.log(document.body);" +
-                    "}" +
-                    "console.log('block done!');";
-                //"cbs.().onload = function() { console.log('fuzzfuzzfuzzfuzzfuzzfuzzfuzzfuzz'); };" +
-                //"console.log(cbs);" +
-                //"console.log('print body and cbs now');" +
-                //"console.log(document.body);" +
-                //"console.log(cbs);" +
-                //"document.body.removeChild(cbs);" +
-                //"console.log('print body and cbs now');" +
-                //"console.log(document.body);" +
-
-                //"";
-                await senderCoreWebView.ExecuteScriptAsync(s);
-
-
-
+                debugWriter.PrintInfo("Execute script now, to hide cookiebar on load...");
+                await senderCoreWebView.ExecuteScriptAsync(curseHelper.HideCookiebarScript);
                 debugWriter.PrintInfo("Script executed.");
             }
 
@@ -501,7 +466,7 @@ namespace WADH.WebView
                     "Manual navigation to addon page finished.", addon);
 
                 debugWriter.PrintInfo("Execute script now, to hide cookiebar...");
-                await senderCoreWebView.ExecuteScriptAsync(curseHelper.HideCookiebarScript);
+                //await senderCoreWebView.ExecuteScriptAsync(curseHelper.HideCookiebarScript);
                 debugWriter.PrintInfo("Script executed.");
 
                 OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.EvaluationOfAddonPageJsonStarting, url,
@@ -548,7 +513,7 @@ namespace WADH.WebView
                 // Todo: This should not happen here !
 
                 senderCoreWebView.Stop(); // Just to make sure
-                senderCoreWebView.Navigate(fetchedDownloadUrl);
+                senderCoreWebView.nav  Navigate(fetchedDownloadUrl);
             }
             else if (curseHelper.IsFetchedDownloadUrl(url) && e.NavigationId == lastNavigationId && !e.IsSuccess && e.HttpStatusCode == 0 &&
                 e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted)
