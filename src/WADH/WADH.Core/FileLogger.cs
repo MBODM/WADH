@@ -3,7 +3,7 @@ using System.Text;
 
 namespace WADH.Core
 {
-    public sealed class ErrorLogger : IErrorLogger
+    public sealed class FileLogger : IFileLogger
     {
         private readonly object syncRoot = new();
         private readonly string logFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MBODM", "WADH.log");

@@ -8,14 +8,14 @@ namespace WADH
     {
         private readonly IExternalToolsHelper externalToolsHelper;
         private readonly IConfigReader configReader;
-        private readonly IErrorLogger errorLogger;
+        private readonly IFileLogger errorLogger;
         private readonly IFileSystemHelper fileSystemHelper;
         private readonly IWebViewHelper webViewHelper;
 
         public MainForm(
             IExternalToolsHelper externalToolsHelper,
             IConfigReader configReader,
-            IErrorLogger errorLogger,
+            IFileLogger errorLogger,
             IFileSystemHelper fileSystemHelper,
             IWebViewHelper webViewHelper)
         {

@@ -2,7 +2,7 @@
 
 namespace WADH.Core
 {
-    public interface IErrorLogger
+    public interface IFileLogger
     {
         void Log(string message, [CallerFilePath] string file = "", [CallerLineNumber] int line = 0);
         void Log(IEnumerable<string> multiLineMessage, [CallerFilePath] string file = "", [CallerLineNumber] int line = 0);

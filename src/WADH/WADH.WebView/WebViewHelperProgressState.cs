@@ -4,6 +4,7 @@
     {
         AddonStarting,
         NavigationToAddonPageStarting,
+        ContentOfAddonPageLoaded,
         NavigationToAddonPageFinished,
         EvaluationOfAddonPageJsonStarting,
         EvaluationOfAddonPageJsonFinished,
