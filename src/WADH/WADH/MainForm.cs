@@ -8,20 +8,20 @@ namespace WADH
     {
         private readonly IExternalToolsHelper externalToolsHelper;
         private readonly IConfigReader configReader;
-        private readonly IFileLogger errorLogger;
+        private readonly IFileLogger fileLogger;
         private readonly IFileSystemHelper fileSystemHelper;
         private readonly IWebViewHelper webViewHelper;
 
         public MainForm(
             IExternalToolsHelper externalToolsHelper,
             IConfigReader configReader,
-            IFileLogger errorLogger,
+            IFileLogger fileLogger,
             IFileSystemHelper fileSystemHelper,
             IWebViewHelper webViewHelper)
         {
             this.externalToolsHelper = externalToolsHelper ?? throw new ArgumentNullException(nameof(externalToolsHelper));
             this.configReader = configReader ?? throw new ArgumentNullException(nameof(configReader));
-            this.errorLogger = errorLogger ?? throw new ArgumentNullException(nameof(errorLogger));
+            this.fileLogger = fileLogger ?? throw new ArgumentNullException(nameof(fileLogger));
             this.fileSystemHelper = fileSystemHelper ?? throw new ArgumentNullException(nameof(fileSystemHelper));
             this.webViewHelper = webViewHelper ?? throw new ArgumentNullException(nameof(webViewHelper));
 
@@ -63,6 +63,15 @@ namespace WADH
             else
             {
                 webView.ZoomFactor = 1.00;
+            }
+
+            var logFile = Path.GetFullPath(fileLogger.Storage); // Seems OK to me (since the BL knows the impl type anyway)
+            if (!string.IsNullOrEmpty(logFile))
+            {
+                if (File.Exists(logFile))
+                {
+                    File.Delete(logFile);
+                }
             }
 
             var configFolder = Path.GetDirectoryName(configReader.Storage); // Seems OK to me (since the BL knows the impl type anyway)
@@ -127,7 +136,7 @@ namespace WADH
                 }
                 catch (Exception ex)
                 {
-                    errorLogger.Log(ex);
+                    fileLogger.Log(ex);
                     ShowError("Error while starting download (see log for details).");
 
                     buttonDownload.Text = "Download";
@@ -223,7 +232,7 @@ namespace WADH
             else if (e.Error != null)
             {
                 labelStatus.Text = $"Error: {e.Error.Message}";
-                errorLogger.Log(e.Error);
+                fileLogger.Log(e.Error);
             }
             else
             {
@@ -245,7 +254,7 @@ namespace WADH
             }
             catch (Exception ex)
             {
-                errorLogger.Log(ex);
+                fileLogger.Log(ex);
                 ShowError("Error while loading config file (see log for details).");
 
                 return false;

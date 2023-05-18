@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Microsoft.Web.WebView2.Core;
 using WADH.Core;
 
@@ -19,6 +20,8 @@ namespace WADH.WebView
             var name = caller != string.Empty ? $"{nameof(WebViewHelper)}.{caller}()" : "Unknown";
 
             fileLogger.Log($"{name} event handler reached");
+
+            Debug.WriteLine($"[{name.Split('.').Last().TrimEnd(')').TrimEnd('(')}] Reached");
         }
 
         public void LogNavigationStarting(CoreWebView2 sender, CoreWebView2NavigationStartingEventArgs e,

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.Web.WebView2.Core;
 using WADH.Core;
@@ -14,6 +15,7 @@ namespace WADH.WebView
         private int finishedDownloads;
         private bool cancellationRequested;
         private string actualAddonName;
+        private string fetchedDownloadUrl;
         private ulong lastStartingNavigationId;
 
         private readonly Queue<string> addonUrls = new();
@@ -28,6 +30,7 @@ namespace WADH.WebView
             this.fileLogger = fileLogger ?? throw new ArgumentNullException(nameof(fileLogger));
 
             actualAddonName = string.Empty;
+            fetchedDownloadUrl = string.Empty;
             logHelper = new LogHelper(fileLogger);
         }
 
@@ -185,21 +188,26 @@ namespace WADH.WebView
             if (sender is CoreWebView2 senderCoreWebView)
             {
                 senderCoreWebView.NavigationStarting -= NavigationStarting1;
+                Debug.WriteLine("[NavigationStarting1] 1 handler removed (self)");
                 logHelper.LogNavigationStarting(senderCoreWebView, e);
 
                 if (curseHelper.IsAddonPageUrl(e.Uri) && !e.IsRedirected && e.NavigationId != lastStartingNavigationId)
                 {
                     lastStartingNavigationId = e.NavigationId;
-
                     // senderWebView.Visible = false; // Prevent scrollbar flickering effect here
                     OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.NavigationToAddonPageStarting, e.Uri,
                         "Starting manual navigation to addon page URL now.", actualAddonName);
+                    Debug.WriteLine($"[NavigationStarting1] Success --> Started with {e.Uri}");
 
+                    // Adding the NavigationCompleted handler inside the DOMContentLoaded handler is too late and does not work.
                     senderCoreWebView.DOMContentLoaded += DOMContentLoaded;
+                    senderCoreWebView.NavigationCompleted += NavigationCompleted1;
+                    Debug.WriteLine("[NavigationStarting1] 2 handlers added");
                 }
                 else
                 {
                     NavigationStartingError(senderCoreWebView, e);
+                    Debug.WriteLine("[NavigationStarting1] Error");
                 }
             }
         }
@@ -211,6 +219,7 @@ namespace WADH.WebView
             if (sender is CoreWebView2 senderCoreWebView)
             {
                 senderCoreWebView.DOMContentLoaded -= DOMContentLoaded;
+                Debug.WriteLine("[DOMContentLoaded] 1 handler removed (self)");
                 logHelper.LogDOMContentLoaded(senderCoreWebView, e);
 
                 logHelper.LogBeforeScriptExecution("disable scrollbar");
@@ -224,8 +233,7 @@ namespace WADH.WebView
                 // senderWebView.Visible = true; // Prevent scrollbar flickering effect here
                 OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.NavigationToAddonPageStarting, senderCoreWebView.Source,
                     "Addon page DOM content loaded.", actualAddonName);
-
-                senderCoreWebView.NavigationCompleted += NavigationCompleted1;
+                Debug.WriteLine("[DOMContentLoaded] Success");
             }
         }
 
@@ -236,6 +244,7 @@ namespace WADH.WebView
             if (sender is CoreWebView2 senderCoreWebView)
             {
                 senderCoreWebView.NavigationCompleted -= NavigationCompleted1;
+                Debug.WriteLine("[NavigationCompleted1] 1 handler removed (self)");
                 logHelper.LogNavigationCompleted(senderCoreWebView, e);
 
                 // At the time of writing this code the EventArgs e still not including the Uri.
@@ -272,13 +281,23 @@ namespace WADH.WebView
 
                         senderCoreWebView.Stop(); // Just to make sure
                         senderCoreWebView.NavigationStarting += NavigationStarting2;
+                        Debug.WriteLine("[NavigationCompleted1] 1 handler added");
+
+                        // 2023-05-08 MBODM:
+                        // For some reason, after calling CoreWebView2.Navigate() inside the NavigationCompleted1() handler,
+                        // the CoreWebView2.Source property does not change. Therefore the URL needs to be cached on our own.
+                        // For more information have a look at https://github.com/MicrosoftEdge/WebView2Feedback/issues/3461
+
+                        this.fetchedDownloadUrl = fetchedDownloadUrl;
                         senderCoreWebView.Navigate(fetchedDownloadUrl);
+                        Debug.WriteLine($"[NavigationCompleted1] Success --> Navigate() called with {fetchedDownloadUrl}");
 
                         return;
                     }
                 }
 
                 NavigationCompletedError(senderCoreWebView, e);
+                Debug.WriteLine("[NavigationCompleted1] Error");
             }
         }
 
@@ -288,7 +307,6 @@ namespace WADH.WebView
 
             if (sender is CoreWebView2 senderCoreWebView)
             {
-                senderCoreWebView.NavigationStarting -= NavigationStarting2;
                 logHelper.LogNavigationStarting(senderCoreWebView, e);
 
                 if (curseHelper.IsFetchedDownloadUrl(e.Uri) && !e.IsRedirected && e.NavigationId != lastStartingNavigationId)
@@ -296,22 +314,36 @@ namespace WADH.WebView
                     lastStartingNavigationId = e.NavigationId;
                     OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.NavigationToFetchedDownloadUrlStarting, e.Uri,
                         "Starting manual navigation to fetched download URL now.", actualAddonName);
+                    Debug.WriteLine("[NavigationStarting2] Success --> FetchedDownloadUrl (initial)");
                 }
                 else if (curseHelper.IsRedirectWithApiKeyUrl(e.Uri) && e.IsRedirected && e.NavigationId == lastStartingNavigationId)
                 {
                     lastStartingNavigationId = e.NavigationId;
                     OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.RedirectWithApiKeyStarting, e.Uri,
                         "Starting automatic navigation by redirect now.", actualAddonName);
+                    Debug.WriteLine("[NavigationStarting2] Success --> RedirectWithApiKeyUrl (redirected)");
                 }
                 else if (curseHelper.IsRealDownloadUrl(e.Uri) && e.IsRedirected && e.NavigationId == lastStartingNavigationId)
                 {
+                    senderCoreWebView.NavigationStarting -= NavigationStarting2;
+                    Debug.WriteLine("[NavigationStarting2] 1 handler removed (self)");
+
                     lastStartingNavigationId = e.NavigationId;
                     OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.RedirectToRealDownloadUrlStarting, e.Uri,
                         "Starting automatic navigation by redirect now.", actualAddonName);
+                    Debug.WriteLine("[NavigationStarting2] Success --> RedirectWithApiKeyUrl (redirected)");
+
+                    senderCoreWebView.DownloadStarting += DownloadStarting;
+                    senderCoreWebView.NavigationCompleted += NavigationCompleted2;
+                    Debug.WriteLine("[NavigationStarting2] 2 handlers added --> DownloadStarting / NavigationCompleted2");
                 }
                 else
                 {
+                    senderCoreWebView.NavigationStarting -= NavigationStarting2;
+                    Debug.WriteLine("[NavigationStarting2] 1 handler removed (self)");
+
                     NavigationStartingError(senderCoreWebView, e);
+                    Debug.WriteLine("[NavigationStarting2] Error");
                 }
             }
         }
@@ -322,7 +354,8 @@ namespace WADH.WebView
 
             if (sender is CoreWebView2 senderCoreWebView)
             {
-                senderCoreWebView.NavigationCompleted -= NavigationCompleted2;
+                //senderCoreWebView.NavigationCompleted -= NavigationCompleted2;
+                Debug.WriteLine("[NavigationCompleted2] 1 handler removed (self)");
                 logHelper.LogNavigationCompleted(senderCoreWebView, e);
 
                 // At the time of writing this code the EventArgs e still not including the Uri.
@@ -330,7 +363,14 @@ namespace WADH.WebView
                 // This should be no problem since the navigations are not running concurrently.
                 // Have a look at https://github.com/MicrosoftEdge/WebView2Feedback/issues/580
 
-                var uri = senderCoreWebView.Source;
+                // var uri = senderCoreWebView.Source;
+
+                // 2023-05-08 MBODM:
+                // For some reason, after calling CoreWebView2.Navigate() inside the NavigationCompleted1() handler,
+                // the CoreWebView2.Source property does not change. Therefore the URL needs to be cached on our own.
+                // For more information have a look at https://github.com/MicrosoftEdge/WebView2Feedback/issues/3461
+
+                var uri = fetchedDownloadUrl;
 
                 // Note: Redirects do not raise this event (in contrast to the starting event).
                 // Therefore only the initial URL and the last redirect will raise this event.
@@ -353,11 +393,12 @@ namespace WADH.WebView
                         "All navigations and redirects finished and download should start now.",
                         actualAddonName);
 
-                    senderCoreWebView.DownloadStarting += DownloadStarting;
+                    Debug.WriteLine("[NavigationCompleted2] Success --> FetchedDownloadUrl (after redirects)");
                 }
                 else
                 {
                     NavigationCompletedError(senderCoreWebView, e);
+                    Debug.WriteLine("[NavigationCompleted2] Error");
                 }
             }
         }
@@ -369,13 +410,16 @@ namespace WADH.WebView
             if (sender is CoreWebView2 senderCoreWebView)
             {
                 senderCoreWebView.DownloadStarting -= DownloadStarting;
+                Debug.WriteLine("[DownloadStarting] 1 handler removed (self)");
                 logHelper.LogDownloadStarting(senderCoreWebView, e);
 
                 OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.DownloadStarting, e.DownloadOperation.Uri,
                     "Starting file download.", actualAddonName, Path.GetFileName(e.ResultFilePath), 0, e.DownloadOperation.TotalBytesToReceive ?? 0);
+                Debug.WriteLine("[DownloadStarting] Success");
 
                 e.DownloadOperation.BytesReceivedChanged += BytesReceivedChanged;
                 e.DownloadOperation.StateChanged += StateChanged;
+                Debug.WriteLine("[DownloadStarting] 2 handlers added");
 
                 e.Handled = true; // Do not show Microsoft Edge´s default download dialog
             }
@@ -402,6 +446,7 @@ namespace WADH.WebView
 
                     OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.DownloadProgress, senderDownloadOperation.Uri,
                         "Downloading file...", actualAddonName, Path.GetFileName(senderDownloadOperation.ResultFilePath), received, total);
+                    Debug.WriteLine($"[BytesReceivedChanged] Success --> {received} / {total} bytes");
 
                     // Doing this inside above if clause, allows small file downloads to finish.
 
@@ -429,6 +474,7 @@ namespace WADH.WebView
 
                 downloadOperation.BytesReceivedChanged -= BytesReceivedChanged;
                 downloadOperation.StateChanged -= StateChanged;
+                Debug.WriteLine("[StateChanged] 2 handlers removed");
 
                 // Next block is specific to 'Completed' state (and not 'Interrupted' state):
 
@@ -460,6 +506,7 @@ namespace WADH.WebView
                         "URL-Queue is empty, there is nothing else to download. --> All addons successfully downloaded");
 
                     OnDownloadAddonsAsyncCompleted(cancellationRequested);
+                    Debug.WriteLine("[StateChanged] Success --> Canceled by user or all addons finished");
                 }
                 else
                 {
@@ -468,6 +515,7 @@ namespace WADH.WebView
                     var next = addonUrls.Dequeue();
                     fileLogger.Log($"URL-Queue is not empty yet, so proceed with next URL in queue. --> {next}");
                     StartAddonProcessing(next);
+                    Debug.WriteLine($"[StateChanged] Success --> Navigate() called with {next}");
                 }
             }
         }
@@ -478,11 +526,13 @@ namespace WADH.WebView
 
             OnDownloadAddonsAsyncProgressChanged(WebViewHelperProgressState.AddonStarting, url,
                 $"Starting processing of addon ({finishedDownloads + 1}/{addonCount}).", actualAddonName);
+            Debug.WriteLine("[StartAddonProcessing] Start processing of next addon");
 
             if (coreWebView == null) return; // Enforced by NRT
 
             coreWebView.Stop(); // Just to make sure
             coreWebView.NavigationStarting += NavigationStarting1;
+            Debug.WriteLine("[StartAddonProcessing] 1 handler added");
             coreWebView.Navigate(url);
         }
 

@@ -9,6 +9,8 @@ namespace WADH.Core
         private readonly string logFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MBODM", "WADH.log");
         private readonly string newLine = Environment.NewLine;
 
+        public string Storage => logFile;
+
         public void Log(string message, [CallerFilePath] string file = "", [CallerLineNumber] int line = 0)
         {
             if (string.IsNullOrWhiteSpace(message))
