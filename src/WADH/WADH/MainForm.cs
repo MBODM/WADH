@@ -39,7 +39,7 @@ namespace WADH
         {
             // The Microsoft WebView2 docs say: The CoreWebView2InitializationCompleted event is fired even before
             // the EnsureCoreWebView2Async() method ends. Therefore just awaiting that method is all we need here.
-            
+
             var env = await webViewHelper.CreateEnvironmentAsync();
             await webView.EnsureCoreWebView2Async(env);
             webViewHelper.Initialize(webView.CoreWebView2);
@@ -158,39 +158,18 @@ namespace WADH
 
                 switch (progressData.State)
                 {
-                    case WebViewHelperProgressState.AddonStarting:
+                    case WebViewHelperProgressState.AddonStarted:
                         buttonDownload.Enabled = true; // Prevent button/logic jitter (button was set inactive on click)
                         labelStatus.Text = $"Downloading \"{progressData.Addon}\"";
                         break;
-                    case WebViewHelperProgressState.NavigationToAddonPageStarting:
-                        // State not used at the moment
+                    case WebViewHelperProgressState.ShouldHideWebView:
+                        webView.Visible = false;
                         break;
-                    case WebViewHelperProgressState.NavigationToAddonPageFinished:
-                        // State not used at the moment
+                    case WebViewHelperProgressState.ShouldShowWebView:
+                        webView.Visible = true;
                         break;
-                    case WebViewHelperProgressState.EvaluationOfAddonPageJsonStarting:
-                        // State not used at the moment
-                        break;
-                    case WebViewHelperProgressState.EvaluationOfAddonPageJsonFinished:
+                    case WebViewHelperProgressState.JsonEvaluationFinished:
                         labelStatus.Text = $"Downloading \"{progressData.Addon}\"";
-                        break;
-                    case WebViewHelperProgressState.NavigationToFetchedDownloadUrlStarting:
-                        // State not used at the moment
-                        break;
-                    case WebViewHelperProgressState.RedirectWithApiKeyStarting:
-                        // State not used at the moment
-                        break;
-                    case WebViewHelperProgressState.RedirectToRealDownloadUrlStarting:
-                        // State not used at the moment
-                        break;
-                    case WebViewHelperProgressState.NavigationToFetchedDownloadUrlFinished:
-                        // State not used at the moment
-                        break;
-                    case WebViewHelperProgressState.NavigationAndRedirectsFinished:
-                        // State not used at the moment
-                        break;
-                    case WebViewHelperProgressState.DownloadStarting:
-                        // State not used at the moment
                         break;
                     case WebViewHelperProgressState.DownloadProgress:
                         // This may not necessary here, since this event/state combination happens for large addons only.
@@ -202,9 +181,6 @@ namespace WADH
                             var total = (double)(progressData.Total / 1024) / 1024;
                             labelStatus.Text += $" ({received:0.00} MB / {total:0.00} MB)".Replace(',', '.');
                         }
-                        break;
-                    case WebViewHelperProgressState.DownloadFinished:
-                        // State not used at the moment
                         break;
                     case WebViewHelperProgressState.AddonFinished:
                         progressBar.Value = e.ProgressPercentage;

@@ -1,5 +1,5 @@
 ﻿namespace WADH.WebView
 {
-    public sealed record WebViewHelperProgressData(
-        WebViewHelperProgressState State, string Url, string Info, string Addon, string File, ulong Received, ulong Total);
+    public sealed record WebViewHelperProgressData(WebViewHelperProgressState State, string Addon, string Message,
+        string File, ulong Received, ulong Total);
 }

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Microsoft.Web.WebView2.Core;
 using WADH.Core;
 
@@ -8,20 +7,22 @@ namespace WADH.WebView
     internal sealed class LogHelper : ILogHelper
     {
         private readonly IFileLogger fileLogger;
+        private readonly IDebugWriter debugWriter;
 
-        public LogHelper(IFileLogger fileLogger)
+        public LogHelper(IFileLogger fileLogger, IDebugWriter debugWriter)
         {
             this.fileLogger = fileLogger ?? throw new ArgumentNullException(nameof(fileLogger));
+            this.debugWriter = debugWriter ?? throw new ArgumentNullException(nameof(debugWriter));
         }
 
         public void LogEvent([CallerMemberName] string caller = "",
             [CallerFilePath] string file = "", [CallerLineNumber] int line = 0)
         {
+            debugWriter.Reached(caller);
+
             var name = caller != string.Empty ? $"{nameof(WebViewHelper)}.{caller}()" : "Unknown";
 
             fileLogger.Log($"{name} event handler reached");
-
-            Debug.WriteLine($"[{name.Split('.').Last().TrimEnd(')').TrimEnd('(')}] Reached");
         }
 
         public void LogNavigationStarting(CoreWebView2 sender, CoreWebView2NavigationStartingEventArgs e,

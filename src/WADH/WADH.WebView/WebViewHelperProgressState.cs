@@ -2,20 +2,11 @@
 {
     public enum WebViewHelperProgressState
     {
-        AddonStarting,
-        NavigationToAddonPageStarting,
-        ContentOfAddonPageLoaded,
-        NavigationToAddonPageFinished,
-        EvaluationOfAddonPageJsonStarting,
-        EvaluationOfAddonPageJsonFinished,
-        NavigationToFetchedDownloadUrlStarting,
-        RedirectWithApiKeyStarting,
-        RedirectToRealDownloadUrlStarting,
-        NavigationToFetchedDownloadUrlFinished,
-        NavigationAndRedirectsFinished,
-        DownloadStarting,
+        AddonStarted,
+        ShouldHideWebView,
+        ShouldShowWebView,
+        JsonEvaluationFinished,
         DownloadProgress,
-        DownloadFinished,
         AddonFinished,
     }
 }
